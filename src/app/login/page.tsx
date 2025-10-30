@@ -31,15 +31,24 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call, always successful for demo purposes
+    // Simulate API call with validation
     setTimeout(() => {
-      const displayUsername = username || "admin";
-      login({ username: displayUsername, photoURL: '' });
-      toast({
-        title: "Login Berhasil",
-        description: `Selamat datang kembali, ${displayUsername}!`,
-      });
-      router.push("/");
+      if (username === "admin" && password === "password") {
+        const displayUsername = username || "admin";
+        login({ username: displayUsername, photoURL: '' });
+        toast({
+          title: "Login Berhasil",
+          description: `Selamat datang kembali, ${displayUsername}!`,
+        });
+        router.push("/");
+      } else {
+        toast({
+            variant: "destructive",
+            title: "Login Gagal",
+            description: "Username atau password yang Anda masukkan salah.",
+        });
+        setIsLoading(false);
+      }
     }, 1000);
   };
 
