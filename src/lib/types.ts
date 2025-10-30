@@ -12,4 +12,5 @@ export interface Transaction {
 
 export interface User {
   username: string;
+  photoURL?: string;
 }

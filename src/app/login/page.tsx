@@ -34,7 +34,7 @@ export default function LoginPage() {
     // Simulate API call, always successful for demo purposes
     setTimeout(() => {
       const displayUsername = username || "admin";
-      login({ username: displayUsername });
+      login({ username: displayUsername, photoURL: '' });
       toast({
         title: "Login Berhasil",
         description: `Selamat datang kembali, ${displayUsername}!`,
@@ -52,7 +52,11 @@ export default function LoginPage() {
                 <Image src={KassaKilatIcon} alt="Kassa Kilat Icon" width={40} height={40} />
             </div>
             <CardTitle className="text-3xl font-headline text-primary">Kassa Kilat</CardTitle>
-            <CardDescription>Masuk untuk mengelola penjualan Anda</CardDescription>
+            <CardDescription>
+              Masuk untuk mengelola penjualan Anda.
+              <br/>
+              <span className="text-xs text-muted-foreground">(user: admin, pass: password)</span>
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
