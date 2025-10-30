@@ -2,61 +2,31 @@ import type { Transaction, PaymentMethod } from "./types";
 import { format } from "date-fns";
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(amount);
+  // Use a simpler format like 45k
+  if (amount >= 1000) {
+    return `${amount / 1000}k`;
+  }
+  return amount.toString();
 };
 
-const padEnd = (str: string, length: number) => {
-  return str.padEnd(length, " ");
-};
+const formatCurrencyWithIDR = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
 
-const padStart = (str: string, length: number) => {
-    return str.padStart(length, " ");
-};
 
 export const generateTxtReport = (transactions: Transaction[]): string => {
   const now = new Date();
   let content = `Laporan Penjualan - Kassa Kilat\n`;
   content += `Tanggal Cetak: ${format(now, "yyyy-MM-dd HH:mm:ss")}\n\n`;
 
-  const line = "=".repeat(80) + "\n";
-  content += line;
-  content += padStart("DETAIL TRANSAKSI", 49) + "\n";
-  content += line;
-
-  // Header
-  content +=
-    padEnd("Waktu", 21) +
-    "| " +
-    padEnd("Produk", 20) +
-    "| " +
-    padEnd("Qty", 5) +
-    "| " +
-    padEnd("Harga", 12) +
-    "| " +
-    padEnd("Total", 12) +
-    "| " +
-    "Metode\n";
-  content += "-".repeat(80) + "\n";
-
   // Rows
-  transactions.forEach((t) => {
+  transactions.forEach((t, index) => {
     content +=
-      padEnd(format(new Date(t.timestamp), "yyyy-MM-dd HH:mm"), 21) +
-      "| " +
-      padEnd(t.productName.substring(0, 18), 20) +
-      "| " +
-      padEnd(t.quantity.toString(), 5) +
-      "| " +
-      padEnd(formatCurrency(t.price), 12) +
-      "| " +
-      padEnd(formatCurrency(t.total), 12) +
-      "| " +
-      t.paymentMethod +
-      "\n";
+      `${index + 1}. ${t.productName} = ${t.quantity}x${formatCurrency(t.price)}=${formatCurrency(t.total)}\n`;
   });
 
   // Summary
@@ -68,16 +38,12 @@ export const generateTxtReport = (transactions: Transaction[]): string => {
     grandTotal += t.total;
   });
 
-  content += "\n" + line;
-  content += padStart("RINGKASAN PEMBAYARAN", 51) + "\n";
-  content += line;
+  content += "\n";
+  content += `Total = ${formatCurrencyWithIDR(grandTotal)}\n\n`;
 
-  content += `Tunai   : ${formatCurrency(summary.Tunai)}\n`;
-  content += `QR      : ${formatCurrency(summary.QR)}\n`;
-  content += `Transfer: ${formatCurrency(summary.Transfer)}\n`;
-  content += "-".repeat(40) + "\n";
-  content += `TOTAL PENJUALAN: ${formatCurrency(grandTotal)}\n`;
-  content += line;
+  if (summary.Tunai > 0) content += `Tunai = ${formatCurrencyWithIDR(summary.Tunai)}\n`;
+  if (summary.QR > 0) content += `QR = ${formatCurrencyWithIDR(summary.QR)}\n`;
+  if (summary.Transfer > 0) content += `Transfer = ${formatCurrencyWithIDR(summary.Transfer)}\n`;
 
   return content;
 };
