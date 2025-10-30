@@ -7,9 +7,17 @@ import Image from "next/image";
 import KassaKilatIcon from "@/app/icon.svg";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useEffect, useState } from "react";
+import { Skeleton } from "./ui/skeleton";
 
 export function Header() {
   const { logout, user } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card/80 px-4 backdrop-blur-sm sm:px-6">
@@ -20,7 +28,7 @@ export function Header() {
         </h1>
       </Link>
       <div className="ml-auto flex items-center gap-2 sm:gap-4">
-        {user && (
+        {isClient && user ? (
             <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={user.photoURL} alt={user.username} />
@@ -28,6 +36,11 @@ export function Header() {
                 </Avatar>
                 <span className="text-sm text-muted-foreground hidden sm:inline">Halo, {user.username}</span>
             </div>
+        ) : isClient ? null : (
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-4 w-20 hidden sm:inline" />
+          </div>
         )}
         <Link href="/settings">
             <Button variant="ghost" size="icon" aria-label="Settings">
