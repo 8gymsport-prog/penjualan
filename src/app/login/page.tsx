@@ -20,8 +20,8 @@ import KassaKilatIcon from "@/app/icon.svg";
 import Image from "next/image";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("admin");
+  const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
@@ -31,23 +31,15 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
+    // Simulate API call, always successful for demo purposes
     setTimeout(() => {
-      if (username === "admin" && password === "password") {
-        login({ username });
-        toast({
-          title: "Login Berhasil",
-          description: `Selamat datang kembali, ${username}!`,
-        });
-        router.push("/");
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login Gagal",
-          description: "Username atau password salah.",
-        });
-        setIsLoading(false);
-      }
+      const displayUsername = username || "admin";
+      login({ username: displayUsername });
+      toast({
+        title: "Login Berhasil",
+        description: `Selamat datang kembali, ${displayUsername}!`,
+      });
+      router.push("/");
     }, 1000);
   };
 
