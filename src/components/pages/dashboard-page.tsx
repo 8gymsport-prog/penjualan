@@ -45,21 +45,36 @@ export default function DashboardPage() {
         setIsProcessing(false);
     }, 500);
   };
+
+  const clearTransactions = () => {
+    setTransactions([]);
+    toast({
+        title: "Riwayat Dihapus",
+        description: "Semua transaksi telah berhasil dihapus.",
+    });
+  };
   
   if (!isClient || !isAuthenticated) {
     return (
-        <div className="flex h-screen w-full items-center justify-center">
-           <div className="space-y-4 w-full max-w-4xl p-4">
-            <Skeleton className="h-16 w-full" />
-            <div className="grid grid-cols-4 gap-4">
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
-            </div>
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-64 w-full" />
-           </div>
+        <div className="flex flex-col min-h-screen w-full">
+            <Header />
+            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+                <Skeleton className="h-8 w-64" />
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <Skeleton className="h-28" />
+                    <Skeleton className="h-28" />
+                    <Skeleton className="h-28" />
+                    <Skeleton className="h-28" />
+                </div>
+                <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+                    <div className="xl:col-span-3">
+                        <Skeleton className="h-60" />
+                    </div>
+                    <div className="xl:col-span-3">
+                         <Skeleton className="h-80" />
+                    </div>
+                </div>
+            </main>
         </div>
     );
   }
@@ -78,7 +93,7 @@ export default function DashboardPage() {
               <TransactionForm addTransaction={addTransaction} isProcessing={isProcessing} />
             </div>
             <div className="xl:col-span-3">
-              <TransactionsTable transactions={transactions} />
+              <TransactionsTable transactions={transactions} clearTransactions={clearTransactions} />
             </div>
           </div>
         </div>

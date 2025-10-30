@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -12,11 +13,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import type { Transaction } from "@/lib/types";
 import { downloadFile, generateCsvReport, generateTxtReport } from "@/lib/reports";
-import { FileText, FileSpreadsheet } from "lucide-react";
+import { FileText, FileSpreadsheet, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface TransactionsTableProps {
   transactions: Transaction[];
+  clearTransactions: () => void;
 }
 
 const formatCurrency = (amount: number) => {
@@ -27,7 +40,8 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
   };
 
-export function TransactionsTable({ transactions }: TransactionsTableProps) {
+export function TransactionsTable({ transactions, clearTransactions }: TransactionsTableProps) {
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   const handleDownloadTxt = () => {
     const txtContent = generateTxtReport(transactions);
@@ -40,6 +54,11 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
     const fileName = `laporan_penjualan_${format(new Date(), "yyyy-MM-dd")}.csv`;
     downloadFile(csvContent, fileName, "text/csv");
   };
+
+  const handleClear = () => {
+    clearTransactions();
+    setIsAlertOpen(false);
+  }
 
   return (
     <Card>
@@ -58,6 +77,26 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
                     Excel
                 </Button>
+                 <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={transactions.length === 0}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Hapus
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tindakan ini akan menghapus semua riwayat transaksi secara permanen. Data yang sudah dihapus tidak dapat dikembalikan.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Batal</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClear}>Ya, Hapus</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
       </CardHeader>
