@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser, useFirestore } from '@/firebase';
+import { useAuth, useUser, useFirestore, FirestorePermissionError, errorEmitter } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -51,36 +51,65 @@ export default function LoginPage() {
         title: 'Pendaftaran Gagal',
         description: 'Username minimal 3 karakter.',
       });
+      setIsLoading(false);
       return;
     }
 
     // Check if username already exists
-    const usernameQuery = query(collection(firestore, 'users'), where('username', '==', username));
-    const usernameSnapshot = await getDocs(usernameQuery);
-    if (!usernameSnapshot.empty) {
-      toast({
-        variant: 'destructive',
-        title: 'Pendaftaran Gagal',
-        description: 'Username ini sudah digunakan. Silakan pilih yang lain.',
-      });
-      return;
-    }
-
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const newUser = userCredential.user;
+    const usersCol = collection(firestore, 'users');
+    const usernameQuery = query(usersCol, where('username', '==', username));
     
-    // Save user profile with username
-    await setDoc(doc(firestore, 'users', newUser.uid), {
-      id: newUser.uid,
-      username: username,
-      email: newUser.email, // Storing email for potential future use
-    });
+    getDocs(usernameQuery).then(async (usernameSnapshot) => {
+        if (!usernameSnapshot.empty) {
+          toast({
+            variant: 'destructive',
+            title: 'Pendaftaran Gagal',
+            description: 'Username ini sudah digunakan. Silakan pilih yang lain.',
+          });
+          setIsLoading(false);
+          return;
+        }
 
-    toast({
-      title: 'Pendaftaran Berhasil',
-      description: 'Akun Anda telah dibuat. Silakan masuk.',
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const newUser = userCredential.user;
+            
+            // Save user profile with username
+            await setDoc(doc(firestore, 'users', newUser.uid), {
+              id: newUser.uid,
+              username: username,
+              email: newUser.email,
+            });
+
+            toast({
+              title: 'Pendaftaran Berhasil',
+              description: 'Akun Anda telah dibuat. Silakan masuk.',
+            });
+            setIsSignUp(false); // Switch to login view after successful sign up
+        } catch (error: any) {
+             let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+              if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
+              } else if (error.code === 'auth/weak-password') {
+                errorMessage = 'Password terlalu lemah. Gunakan minimal 6 karakter.';
+              }
+              toast({
+                variant: 'destructive',
+                title: 'Pendaftaran Gagal',
+                description: errorMessage,
+              });
+        } finally {
+            setIsLoading(false);
+        }
+
+    }).catch(error => {
+        const permissionError = new FirestorePermissionError({
+            path: usersCol.path,
+            operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setIsLoading(false);
     });
-    setIsSignUp(false); // Switch to login view after successful sign up
   };
 
   const handleSignIn = async () => {
@@ -89,24 +118,78 @@ export default function LoginPage() {
 
      // If input doesn't contain '@', it's a username, so we need to find the email
      if (!email.includes('@')) {
-        const usernameQuery = query(collection(firestore, 'users'), where('username', '==', email));
-        const querySnapshot = await getDocs(usernameQuery);
+        const usersCol = collection(firestore, 'users');
+        const usernameQuery = query(usersCol, where('username', '==', email));
         
-        if (querySnapshot.empty) {
-          throw new Error('auth/user-not-found');
+        getDocs(usernameQuery).then(async (querySnapshot) => {
+            if (querySnapshot.empty) {
+              // We throw a specific string to be caught and translated to the user.
+              throw new Error('auth/user-not-found');
+            }
+            
+            const userData = querySnapshot.docs[0].data();
+            userEmail = userData.email;
+
+            try {
+                await signInWithEmailAndPassword(auth, userEmail, password);
+                toast({
+                    title: 'Login Berhasil',
+                    description: 'Selamat datang kembali!',
+                });
+                // The useEffect will now handle the redirection
+            } catch(error: any) {
+                // Handle credential errors from signInWithEmailAndPassword
+                let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = 'Email/Username atau password yang Anda masukkan salah.';
+                }
+                toast({
+                    variant: 'destructive',
+                    title: 'Login Gagal',
+                    description: errorMessage,
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        }).catch(error => {
+            if (error.message === 'auth/user-not-found') {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Login Gagal',
+                    description: 'Email/Username atau password yang Anda masukkan salah.',
+                });
+            } else {
+                 const permissionError = new FirestorePermissionError({
+                    path: usersCol.path,
+                    operation: 'list',
+                });
+                errorEmitter.emit('permission-error', permissionError);
+            }
+            setIsLoading(false);
+        });
+     } else {
+        // Sign in with email
+        try {
+            await signInWithEmailAndPassword(auth, userEmail, password);
+            toast({
+                title: 'Login Berhasil',
+                description: 'Selamat datang kembali!',
+            });
+        } catch (error: any) {
+            let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                errorMessage = 'Email/Username atau password yang Anda masukkan salah.';
+            }
+             toast({
+                variant: 'destructive',
+                title: 'Login Gagal',
+                description: errorMessage,
+            });
+        } finally {
+             setIsLoading(false);
         }
-        
-        // Assuming usernames are unique, get the first result
-        const userData = querySnapshot.docs[0].data();
-        userEmail = userData.email;
      }
 
-     await signInWithEmailAndPassword(auth, userEmail, password);
-     toast({
-        title: 'Login Berhasil',
-        description: 'Selamat datang kembali!',
-     });
-     // The useEffect will now handle the redirection
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,30 +197,10 @@ export default function LoginPage() {
     if (!auth) return;
     setIsLoading(true);
 
-    try {
-      if (isSignUp) {
+    if (isSignUp) {
         await handleSignUp();
-      } else {
+    } else {
         await handleSignIn();
-      }
-    } catch (error: any) {
-      console.error(error);
-      let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.message === 'auth/user-not-found') {
-        errorMessage = 'Email/Username atau password yang Anda masukkan salah.';
-      } else if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Password terlalu lemah. Gunakan minimal 6 karakter.';
-      }
-      
-      toast({
-        variant: 'destructive',
-        title: 'Login Gagal',
-        description: errorMessage,
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
   
