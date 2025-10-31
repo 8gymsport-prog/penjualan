@@ -48,12 +48,12 @@ export function Header() {
       <Link href="/" className="flex items-center gap-2">
         <Image
           src={KassaKilatIcon}
-          alt="Kassa Kilat Icon"
+          alt="Ikon 店"
           width={32}
           height={32}
         />
         <h1 className="hidden text-xl font-semibold font-headline text-primary sm:block">
-          Kassa Kilat
+          店
         </h1>
       </Link>
       <div className="ml-auto flex items-center gap-2 sm:gap-4">

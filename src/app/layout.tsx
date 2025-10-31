@@ -4,7 +4,7 @@ import "./globals.css";
 import { FirebaseClientProvider } from "@/firebase";
 
 export const metadata: Metadata = {
-  title: "Kassa Kilat",
+  title: "店",
   description: "Aplikasi kasir untuk mencatat penjualan dan membuat laporan.",
 };
 

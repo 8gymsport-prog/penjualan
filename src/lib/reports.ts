@@ -20,7 +20,7 @@ const formatCurrencyWithIDR = (amount: number) => {
 
 export const generateTxtReport = (transactions: Transaction[]): string => {
   const now = new Date();
-  let content = `Laporan Penjualan - Kassa Kilat\n`;
+  let content = `Laporan Penjualan - 店\n`;
   content += `Tanggal Cetak: ${format(now, "yyyy-MM-dd HH:mm:ss")}\n\n`;
 
   // Rows

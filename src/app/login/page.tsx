@@ -100,13 +100,13 @@ export default function LoginPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               <Image
                 src={KassaKilatIcon}
-                alt="Kassa Kilat Icon"
+                alt="Ikon 店"
                 width={40}
                 height={40}
               />
             </div>
             <CardTitle className="text-3xl font-headline text-primary">
-              Kassa Kilat
+              店
             </CardTitle>
             <CardDescription>
               {isSignUp
