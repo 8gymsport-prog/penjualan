@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Transaction } from "@/lib/types";
-import { Trash2 } from "lucide-react";
+import { Trash2, FileText } from "lucide-react";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { ReportPreviewDialog } from "./report-preview-dialog";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -41,6 +42,8 @@ const formatCurrency = (amount: number) => {
 
 export function TransactionsTable({ transactions, clearTransactions }: TransactionsTableProps) {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
 
   const handleClear = () => {
     clearTransactions();
@@ -56,6 +59,10 @@ export function TransactionsTable({ transactions, clearTransactions }: Transacti
                 <CardDescription>Daftar semua penjualan yang tercatat hari ini.</CardDescription>
             </div>
             <div className="mt-4 sm:mt-0 flex items-center gap-2">
+                 <Button variant="outline" size="sm" onClick={() => setIsPreviewOpen(true)} disabled={transactions.length === 0}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Preview Laporan
+                 </Button>
                  <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" disabled={transactions.length === 0}>
@@ -111,6 +118,11 @@ export function TransactionsTable({ transactions, clearTransactions }: Transacti
         </Table>
         </div>
       </CardContent>
+       <ReportPreviewDialog
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        transactions={transactions}
+      />
     </Card>
   );
 }
