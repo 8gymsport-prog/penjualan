@@ -12,7 +12,7 @@
  *
  * Key Security Decisions:
  * - Users can only create, read, update, and delete their own data.
- * - No listing of all users is allowed.
+ * - Listing of all users is allowed for username/email lookup during login.
  *
  * Denormalization for Authorization:
  * - The data structure is designed to avoid the need for `get()` calls in security rules.
@@ -49,10 +49,10 @@ service cloud.firestore {
         return isOwner(userId) && resource != null;
       }
 
-      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // Allow listing to find user by username
+      allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 

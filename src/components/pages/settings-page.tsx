@@ -93,16 +93,15 @@ export default function SettingsPage() {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
-    if (user) {
-      setUsername(user.displayName || user.email || '');
-      setPhoto(user.photoURL || undefined);
-    }
   }, [user, isUserLoading, router]);
 
   useEffect(() => {
     if (userProfile) {
       setUsername(userProfile.username || user?.email || '');
-      setPhoto(userProfile.profilePictureUrl || user?.photoURL || undefined);
+      setPhoto(userProfile.profilePictureUrl || undefined);
+    } else if (user) {
+      setUsername(user.displayName || user.email || '');
+      setPhoto(user.photoURL || undefined);
     }
   }, [userProfile, user]);
 
@@ -130,15 +129,18 @@ export default function SettingsPage() {
 
     setIsUpdating(true);
     try {
-      // Update Firebase Auth profile (only display name)
-      await updateProfile(auth.currentUser, { displayName: username });
+      
+      // We don't update Firebase Auth profile photoURL due to length limits.
+      // We only update displayName in Auth, and username/photo in Firestore.
+      if(auth.currentUser.displayName !== username) {
+        await updateProfile(auth.currentUser, { displayName: username });
+      }
 
       // Update Firestore document with username and new photo
       const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
       await setDoc(
         userDocRef,
         {
-          id: auth.currentUser.uid, // ensure id is set
           username: username,
           profilePictureUrl: photo,
         },

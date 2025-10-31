@@ -41,7 +41,7 @@ export function Header() {
 
   const displayName =
     userProfile?.username || user?.displayName || user?.email || 'User';
-  const photoURL = userProfile?.profilePictureUrl || user?.photoURL;
+  const photoURL = userProfile?.profilePictureUrl;
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card/80 px-4 backdrop-blur-sm sm:px-6">

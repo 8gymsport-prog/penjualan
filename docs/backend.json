@@ -14,6 +14,11 @@
           "type": "string",
           "description": "Username of the user."
         },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
         "profilePictureUrl": {
           "type": "string",
           "description": "URL of the user's profile picture."
@@ -21,7 +26,8 @@
       },
       "required": [
         "id",
-        "username"
+        "username",
+        "email"
       ]
     },
     "Product": {
