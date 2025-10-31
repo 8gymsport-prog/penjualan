@@ -1,12 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useAuth, useFirebase } from "@/firebase";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth, useUser } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-} from "firebase/auth";
-import { Button } from "@/components/ui/button";
+} from 'firebase/auth';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -14,21 +15,30 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { LogIn, UserPlus } from "lucide-react";
-import KassaKilatIcon from "@/app/icon.svg";
-import Image from "next/image";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { LogIn, UserPlus } from 'lucide-react';
+import KassaKilatIcon from '@/app/icon.svg';
+import Image from 'next/image';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@kassa.kilat");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState('admin@kassa.kilat');
+  const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    // If the user is already logged in, redirect them to the dashboard.
+    if (!isUserLoading && user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,29 +49,39 @@ export default function LoginPage() {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
         toast({
-          title: "Pendaftaran Berhasil",
-          description: "Akun Anda telah dibuat. Silakan masuk.",
+          title: 'Pendaftaran Berhasil',
+          description: 'Akun Anda telah dibuat. Silakan masuk.',
         });
         setIsSignUp(false); // Switch to login view after successful sign up
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         toast({
-          title: "Login Berhasil",
-          description: "Selamat datang kembali!",
+          title: 'Login Berhasil',
+          description: 'Selamat datang kembali!',
         });
-        // Redirect handled by AuthProvider/useUser hook in layout/page
+        // The useEffect will now handle the redirection
       }
     } catch (error: any) {
       console.error(error);
       toast({
-        variant: "destructive",
-        title: "Login Gagal",
-        description: error.message || "Email atau password salah.",
+        variant: 'destructive',
+        title: 'Login Gagal',
+        description: error.message || 'Email atau password salah.',
       });
     } finally {
       setIsLoading(false);
     }
   };
+  
+  // Don't render the login form if we are still checking the user's auth state
+  // or if the user is already logged in (and the redirect is in progress).
+  if (isUserLoading || user) {
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-background p-4">
+            <p>Loading...</p>
+        </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -80,7 +100,9 @@ export default function LoginPage() {
               Kassa Kilat
             </CardTitle>
             <CardDescription>
-              {isSignUp ? "Buat akun baru Anda." : "Masuk untuk mengelola penjualan Anda."}
+              {isSignUp
+                ? 'Buat akun baru Anda.'
+                : 'Masuk untuk mengelola penjualan Anda.'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -112,11 +134,16 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading
-                ? "Memproses..."
+                ? 'Memproses...'
                 : isSignUp
-                ? "Daftar"
-                : "Masuk"}
-              {!isLoading && (isSignUp ? <UserPlus className="ml-2 h-4 w-4" /> : <LogIn className="ml-2 h-4 w-4" />)}
+                ? 'Daftar'
+                : 'Masuk'}
+              {!isLoading &&
+                (isSignUp ? (
+                  <UserPlus className="ml-2 h-4 w-4" />
+                ) : (
+                  <LogIn className="ml-2 h-4 w-4" />
+                ))}
             </Button>
             <Button
               type="button"
@@ -126,8 +153,8 @@ export default function LoginPage() {
               disabled={isLoading}
             >
               {isSignUp
-                ? "Sudah punya akun? Masuk"
-                : "Belum punya akun? Daftar"}
+                ? 'Sudah punya akun? Masuk'
+                : 'Belum punya akun? Daftar'}
             </Button>
           </CardFooter>
         </form>
