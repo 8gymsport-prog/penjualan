@@ -43,6 +43,22 @@ export default function DashboardPage() {
     }
   }, [user, isUserLoading, router]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (transactions.length > 0) {
+        e.preventDefault();
+        // returnValue is required for Chrome
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [transactions]);
+
   const addTransaction = (
     newTransactionData: Omit<
       Transaction,
