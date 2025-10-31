@@ -23,10 +23,26 @@ export const generateTxtReport = (transactions: Transaction[]): string => {
   let content = `Laporan Penjualan - 店\n`;
   content += `Tanggal Cetak: ${format(now, "yyyy-MM-dd HH:mm:ss")}\n\n`;
 
-  // Rows
-  transactions.forEach((t, index) => {
-    content +=
-      `${index + 1}. ${t.productName} = ${t.quantity}x${formatCurrency(t.price)}=${formatCurrency(t.total)}\n`;
+  // Group transactions by product
+  const grouped: Record<string, { quantity: number; total: number; price: number, productName: string }> = {};
+  transactions.forEach((t) => {
+    if (!grouped[t.productId]) {
+      grouped[t.productId] = {
+        quantity: 0,
+        total: 0,
+        price: t.price,
+        productName: t.productName,
+      };
+    }
+    grouped[t.productId].quantity += t.quantity;
+    grouped[t.productId].total += t.total;
+  });
+
+
+  // Rows from grouped transactions
+  Object.values(grouped).forEach((p, index) => {
+     content +=
+      `${index + 1}. ${p.productName} = ${p.quantity}x${formatCurrency(p.price)}=${formatCurrency(p.total)}\n`;
   });
 
   // Summary
