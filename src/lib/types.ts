@@ -8,7 +8,18 @@ export interface Transaction {
   total: number;
   paymentMethod: PaymentMethod;
   timestamp: string;
+  // Firestore fields
+  productId: string;
+  userId: string;
 }
+
+export interface Product {
+    id: string;
+    name: string;
+    price: number;
+    userId: string;
+}
+
 
 // This User type is now simplified as Firebase's User type will be the primary source of truth.
 // You can extend this or use Firebase's `User` type from 'firebase/auth' directly in your components.

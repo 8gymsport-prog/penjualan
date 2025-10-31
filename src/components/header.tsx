@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import KassaKilatIcon from "@/app/icon.svg";
@@ -45,9 +45,14 @@ export function Header() {
                     <AvatarImage src={user.photoURL ?? undefined} alt={user.email ?? ''} />
                     <AvatarFallback>{user.email?.charAt(0).toUpperCase() ?? 'U'}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm text-muted-foreground hidden sm:inline">Halo, {user.email}</span>
+                <span className="text-sm text-muted-foreground hidden sm:inline">Halo, {user.displayName || user.email}</span>
             </div>
         ) : null}
+        <Link href="/products">
+            <Button variant="ghost" size="icon" aria-label="Products">
+                <Package className="h-5 w-5" />
+            </Button>
+        </Link>
         <Link href="/settings">
             <Button variant="ghost" size="icon" aria-label="Settings">
                 <Settings className="h-5 w-5" />

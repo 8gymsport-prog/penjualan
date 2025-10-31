@@ -1,24 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/firebase";
-import useLocalStorage from "@/hooks/use-local-storage";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
-import type { Transaction } from "@/lib/types";
+import type { Transaction, Product } from "@/lib/types";
 import { SalesOverview } from "@/components/dashboard/sales-overview";
 import { TransactionForm } from "@/components/dashboard/transaction-form";
 import { TransactionsTable } from "@/components/dashboard/transactions-table";
 import { Header } from "@/components/header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { collection, addDoc, query, where, Timestamp, getDocs, writeBatch } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
   const { toast } = useToast();
   
-  const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, "users", user.uid, "transactions"),
+      where("timestamp", ">=", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+    );
+  }, [firestore, user]);
+
+  const { data: transactions, isLoading: isLoadingTransactions } = useCollection<Transaction>(transactionsQuery);
+
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, "users", user.uid, "products");
+  }, [firestore, user]);
+
+  const { data: products, isLoading: isLoadingProducts } = useCollection<Product>(productsQuery);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -26,33 +45,87 @@ export default function DashboardPage() {
     }
   }, [user, isUserLoading, router]);
 
-  const addTransaction = (newTransactionData: Omit<Transaction, 'id' | 'timestamp' | 'total'>) => {
+  const addTransaction = (newTransactionData: Omit<Transaction, 'id' | 'timestamp' | 'total' | 'userId'>) => {
+    if (!firestore || !user) return;
     setIsProcessing(true);
-    setTimeout(() => {
-        const newTransaction: Transaction = {
-            ...newTransactionData,
-            id: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            total: newTransactionData.quantity * newTransactionData.price,
-        };
-        setTransactions(prev => [newTransaction, ...prev]);
+    
+    const selectedProduct = products?.find(p => p.id === newTransactionData.productId);
+
+    if (!selectedProduct) {
+        toast({
+            variant: 'destructive',
+            title: "Error",
+            description: "Produk yang dipilih tidak valid.",
+        });
+        setIsProcessing(false);
+        return;
+    }
+
+    const newTransaction = {
+        ...newTransactionData,
+        productName: selectedProduct.name,
+        price: selectedProduct.price,
+        userId: user.uid,
+        timestamp: Timestamp.now().toMillis().toString(),
+        total: newTransactionData.quantity * selectedProduct.price,
+    };
+
+    const transactionsCol = collection(firestore, "users", user.uid, "transactions");
+    addDoc(transactionsCol, newTransaction)
+      .then(() => {
         toast({
             title: "Transaksi Ditambahkan",
             description: `${newTransaction.productName} berhasil ditambahkan.`,
         });
+      })
+      .catch((err) => {
+        console.error(err);
+        const permissionError = new FirestorePermissionError({
+          path: transactionsCol.path,
+          operation: 'create',
+          requestResourceData: newTransaction,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Gagal menambahkan transaksi."
+        })
+      })
+      .finally(() => {
         setIsProcessing(false);
-    }, 500);
+      });
   };
 
-  const clearTransactions = () => {
-    setTransactions([]);
-    toast({
-        title: "Riwayat Dihapus",
-        description: "Semua transaksi telah berhasil dihapus.",
-    });
+  const clearTransactions = async () => {
+    if (!firestore || !user || !transactions || transactions.length === 0) return;
+
+    try {
+        const transactionsCol = collection(firestore, "users", user.uid, "transactions");
+        const querySnapshot = await getDocs(query(transactionsCol, where("timestamp", ">=", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())));
+        
+        const batch = writeBatch(firestore);
+        querySnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+
+        toast({
+            title: "Riwayat Dihapus",
+            description: "Semua transaksi hari ini telah berhasil dihapus.",
+        });
+    } catch(err) {
+        console.error(err);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Gagal menghapus riwayat transaksi.'
+        })
+    }
   };
   
-  if (isUserLoading || !user) {
+  if (isUserLoading || !user || isLoadingTransactions || isLoadingProducts) {
     return (
         <div className="flex flex-col min-h-screen w-full">
             <Header />
@@ -85,13 +158,17 @@ export default function DashboardPage() {
           Dashboard Penjualan
         </h2>
         <div className="flex flex-col gap-4 md:gap-8">
-          <SalesOverview transactions={transactions} />
+          <SalesOverview transactions={transactions || []} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
             <div className="xl:col-span-3">
-              <TransactionForm addTransaction={addTransaction} isProcessing={isProcessing} />
+              <TransactionForm 
+                addTransaction={addTransaction} 
+                isProcessing={isProcessing} 
+                products={products || []} 
+              />
             </div>
             <div className="xl:col-span-3">
-              <TransactionsTable transactions={transactions} clearTransactions={clearTransactions} />
+              <TransactionsTable transactions={transactions || []} clearTransactions={clearTransactions} />
             </div>
           </div>
         </div>
