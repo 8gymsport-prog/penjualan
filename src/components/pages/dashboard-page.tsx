@@ -9,6 +9,7 @@ import {
   useMemoFirebase,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import useLocalStorage from '@/hooks/use-local-storage';
 import type { Transaction, Product } from '@/lib/types';
 import { SalesOverview } from '@/components/dashboard/sales-overview';
 import { TransactionForm } from '@/components/dashboard/transaction-form';
@@ -26,7 +27,7 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const productsQuery = useMemoFirebase(() => {
