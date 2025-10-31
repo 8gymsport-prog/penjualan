@@ -17,16 +17,7 @@ import { Header } from '@/components/header';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   collection,
-  doc,
-  setDoc,
-  query,
-  where,
-  Timestamp,
-  getDocs,
-  writeBatch,
 } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function DashboardPage() {
@@ -34,23 +25,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
-
+  
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const transactionsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(
-      collection(firestore, 'users', user.uid, 'transactions'),
-      where(
-        'timestamp',
-        '>=',
-        new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
-      )
-    );
-  }, [firestore, user]);
-
-  const { data: transactions, isLoading: isLoadingTransactions } =
-    useCollection<Transaction>(transactionsQuery);
 
   const productsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -69,12 +46,11 @@ export default function DashboardPage() {
   const addTransaction = (
     newTransactionData: Omit<
       Transaction,
-      'id' | 'timestamp' | 'total' | 'userId'
+      'id' | 'timestamp' | 'total' | 'userId' | 'productName' | 'price'
     >
   ) => {
-    if (!firestore || !user) return;
     setIsProcessing(true);
-
+    
     const selectedProduct = products?.find(
       (p) => p.id === newTransactionData.productId
     );
@@ -89,95 +65,35 @@ export default function DashboardPage() {
       return;
     }
 
-    const transactionId = uuidv4();
-    const newTransaction = {
+    const newTransaction: Transaction = {
       ...newTransactionData,
-      id: transactionId,
+      id: uuidv4(),
       productName: selectedProduct.name,
       price: selectedProduct.price,
-      userId: user.uid,
-      timestamp: Timestamp.now().toMillis().toString(),
+      userId: user!.uid,
+      timestamp: Date.now().toString(),
       total: newTransactionData.quantity * selectedProduct.price,
     };
+    
+    setTransactions(prevTransactions => [...prevTransactions, newTransaction]);
+    
+    toast({
+      title: 'Transaksi Ditambahkan',
+      description: `${newTransaction.productName} berhasil ditambahkan.`,
+    });
 
-    const transactionRef = doc(
-      firestore,
-      'users',
-      user.uid,
-      'transactions',
-      transactionId
-    );
-
-    setDoc(transactionRef, newTransaction)
-      .then(() => {
-        toast({
-          title: 'Transaksi Ditambahkan',
-          description: `${newTransaction.productName} berhasil ditambahkan.`,
-        });
-      })
-      .catch((err) => {
-        console.error(err);
-        const permissionError = new FirestorePermissionError({
-          path: transactionRef.path,
-          operation: 'create',
-          requestResourceData: newTransaction,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Gagal menambahkan transaksi.',
-        });
-      })
-      .finally(() => {
-        setIsProcessing(false);
-      });
+    setIsProcessing(false);
   };
 
   const clearTransactions = async () => {
-    if (!firestore || !user || !transactions || transactions.length === 0)
-      return;
-
-    try {
-      const transactionsCol = collection(
-        firestore,
-        'users',
-        user.uid,
-        'transactions'
-      );
-      const querySnapshot = await getDocs(
-        query(
-          transactionsCol,
-          where(
-            'timestamp',
-            '>=',
-            new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
-          )
-        )
-      );
-
-      const batch = writeBatch(firestore);
-      querySnapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-
-      await batch.commit();
-
-      toast({
-        title: 'Riwayat Dihapus',
-        description: 'Semua transaksi hari ini telah berhasil dihapus.',
-      });
-    } catch (err) {
-      console.error(err);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Gagal menghapus riwayat transaksi.',
-      });
-    }
+    setTransactions([]);
+    toast({
+      title: 'Riwayat Dihapus',
+      description: 'Semua transaksi hari ini telah berhasil dihapus.',
+    });
   };
 
-  if (isUserLoading || !user || isLoadingTransactions || isLoadingProducts) {
+  if (isUserLoading || !user || isLoadingProducts) {
     return (
       <div className="flex flex-col min-h-screen w-full">
         <Header />
@@ -210,7 +126,7 @@ export default function DashboardPage() {
           Dashboard Penjualan
         </h2>
         <div className="flex flex-col gap-4 md:gap-8">
-          <SalesOverview transactions={transactions || []} />
+          <SalesOverview transactions={transactions} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
             <div className="xl:col-span-3">
               <TransactionForm
@@ -221,7 +137,7 @@ export default function DashboardPage() {
             </div>
             <div className="xl:col-span-3">
               <TransactionsTable
-                transactions={transactions || []}
+                transactions={transactions}
                 clearTransactions={clearTransactions}
               />
             </div>
