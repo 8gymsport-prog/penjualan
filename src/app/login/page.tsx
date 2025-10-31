@@ -24,8 +24,8 @@ import KassaKilatIcon from '@/app/icon.svg';
 import Image from 'next/image';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@kassa.kilat');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
@@ -63,10 +63,19 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error(error);
+      let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = 'Email atau password yang Anda masukkan salah.';
+      } else if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password terlalu lemah. Gunakan minimal 6 karakter.';
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Login Gagal',
-        description: error.message || 'Email atau password salah.',
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
