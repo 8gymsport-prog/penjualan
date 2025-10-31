@@ -10,7 +10,11 @@ export interface Transaction {
   timestamp: string;
 }
 
+// This User type is now simplified as Firebase's User type will be the primary source of truth.
+// You can extend this or use Firebase's `User` type from 'firebase/auth' directly in your components.
 export interface User {
-  username: string;
-  photoURL?: string;
+  uid: string;
+  email?: string | null;
+  displayName?: string | null;
+  photoURL?: string | null;
 }

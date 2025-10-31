@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
+import { useUser } from "@/firebase";
 import useLocalStorage from "@/hooks/use-local-storage";
 import { useToast } from "@/hooks/use-toast";
 import type { Transaction } from "@/lib/types";
@@ -13,20 +13,18 @@ import { Header } from "@/components/header";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardPage() {
-  const { isAuthenticated, user } = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
   
   const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-    if (!isAuthenticated) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [user, isUserLoading, router]);
 
   const addTransaction = (newTransactionData: Omit<Transaction, 'id' | 'timestamp' | 'total'>) => {
     setIsProcessing(true);
@@ -54,7 +52,7 @@ export default function DashboardPage() {
     });
   };
   
-  if (!isClient || !isAuthenticated) {
+  if (isUserLoading || !user) {
     return (
         <div className="flex flex-col min-h-screen w-full">
             <Header />

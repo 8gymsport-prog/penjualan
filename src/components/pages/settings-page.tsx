@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
+import { useUser, useAuth as useFirebaseAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,25 +11,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User as UserIcon, Lock, Camera } from "lucide-react";
+import { updatePassword, updateProfile } from "firebase/auth";
+
 
 export default function SettingsPage() {
-  const { isAuthenticated, user, updateUser } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const auth = useFirebaseAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
 
-  const [username, setUsername] = useState(user?.username || "");
+  const [username, setUsername] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [photo, setPhoto] = useState<string | undefined>(user?.photoURL);
+  const [photo, setPhoto] = useState<string | undefined>(undefined);
   
   useEffect(() => {
-    setIsClient(true);
-    if (!isAuthenticated) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+     if (user) {
+      setUsername(user.displayName || user.email || "");
+      setPhoto(user.photoURL || undefined);
+    }
+  }, [user, isUserLoading, router]);
   
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,23 +47,26 @@ export default function SettingsPage() {
     }
   };
 
-  const handleUpdateUsername = () => {
-    if (username.length < 2) {
+  const handleUpdateProfile = async () => {
+    if (!auth?.currentUser) return;
+    
+    try {
+        await updateProfile(auth.currentUser, { displayName: username, photoURL: photo });
         toast({
+            title: "Sukses",
+            description: "Profil berhasil diperbarui.",
+        });
+    } catch (error: any) {
+         toast({
             variant: "destructive",
             title: "Error",
-            description: "Username harus lebih dari 2 karakter.",
+            description: error.message || "Gagal memperbarui profil.",
         });
-        return;
     }
-    updateUser({ username });
-    toast({
-        title: "Sukses",
-        description: "Username berhasil diperbarui.",
-    });
   };
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
+     if (!auth?.currentUser) return;
     if (newPassword !== confirmPassword) {
       toast({
         variant: "destructive",
@@ -75,25 +83,26 @@ export default function SettingsPage() {
         });
         return;
     }
-    // In a real app, you'd verify the currentPassword against the backend
-    toast({
-        title: "Sukses",
-        description: "Password berhasil diperbarui (simulasi).",
-    });
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
 
-  const handleUpdatePhoto = () => {
-    updateUser({ photoURL: photo });
-    toast({
-        title: "Sukses",
-        description: "Foto profil berhasil diperbarui.",
-    });
+    try {
+        await updatePassword(auth.currentUser, newPassword);
+        toast({
+            title: "Sukses",
+            description: "Password berhasil diperbarui.",
+        });
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+    } catch(error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Gagal memperbarui password. Anda mungkin perlu login ulang.",
+        });
+    }
   };
   
-  if (!isClient || !isAuthenticated) {
+  if (isUserLoading || !user) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
            <p>Loading...</p>
@@ -109,50 +118,36 @@ export default function SettingsPage() {
           Pengaturan Akun
         </h2>
         <div className="grid gap-6">
-            {/* Edit Profile Picture */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Camera/> Ubah Foto Profil</CardTitle>
-                    <CardDescription>Perbarui foto profil Anda.</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><UserIcon/> Edit Profil</CardTitle>
+                    <CardDescription>Perbarui username dan foto profil Anda.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex items-center gap-4">
-                        <Avatar className="h-20 w-20">
-                            <AvatarImage src={photo} />
-                            <AvatarFallback>{username.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <Input type="file" accept="image/*" onChange={handlePhotoUpload} className="max-w-xs"/>
-                    </div>
-                    <Button onClick={handleUpdatePhoto}>Simpan Foto</Button>
-                </CardContent>
-            </Card>
-
-            {/* Edit Username */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><UserIcon/> Ubah Username</CardTitle>
-                    <CardDescription>Ubah username yang akan ditampilkan di aplikasi.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
+                     <div className="space-y-2">
                         <Label htmlFor="username">Username</Label>
                         <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
                     </div>
-                    <Button onClick={handleUpdateUsername}>Simpan Username</Button>
+                    <div className="space-y-2">
+                        <Label>Foto Profil</Label>
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-20 w-20">
+                                <AvatarImage src={photo} />
+                                <AvatarFallback>{username?.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <Input type="file" accept="image/*" onChange={handlePhotoUpload} className="max-w-xs"/>
+                        </div>
+                    </div>
+                    <Button onClick={handleUpdateProfile}>Simpan Profil</Button>
                 </CardContent>
             </Card>
             
-            {/* Change Password */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Lock/> Ubah Password</CardTitle>
                     <CardDescription>Ubah password masuk Anda secara berkala untuk keamanan.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="current-password">Password Saat Ini</Label>
-                        <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="new-password">Password Baru</Label>
                         <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
