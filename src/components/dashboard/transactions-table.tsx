@@ -30,6 +30,7 @@ import { ReportPreviewDialog } from "./report-preview-dialog";
 interface TransactionsTableProps {
   transactions: Transaction[];
   clearTransactions: () => void;
+  deleteTransaction: (id: string) => void;
 }
 
 const formatCurrency = (amount: number) => {
@@ -40,17 +41,33 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
   };
 
-export function TransactionsTable({ transactions, clearTransactions }: TransactionsTableProps) {
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
+export function TransactionsTable({ transactions, clearTransactions, deleteTransaction }: TransactionsTableProps) {
+  const [isClearAlertOpen, setIsClearAlertOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
 
   const handleClear = () => {
     clearTransactions();
-    setIsAlertOpen(false);
+    setIsClearAlertOpen(false);
+  }
+
+  const openDeleteConfirm = (id: string) => {
+    setTransactionToDelete(id);
+    setIsDeleteAlertOpen(true);
+  }
+
+  const handleDelete = () => {
+    if (transactionToDelete) {
+      deleteTransaction(transactionToDelete);
+    }
+    setIsDeleteAlertOpen(false);
+    setTransactionToDelete(null);
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -63,7 +80,7 @@ export function TransactionsTable({ transactions, clearTransactions }: Transacti
                     <FileText className="mr-2 h-4 w-4" />
                     Preview Laporan
                  </Button>
-                 <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+                 <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" disabled={transactions.length === 0}>
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -79,7 +96,7 @@ export function TransactionsTable({ transactions, clearTransactions }: Transacti
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Batal</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClear}>Ya, Hapus</AlertDialogAction>
+                      <AlertDialogAction onClick={handleClear}>Ya, Hapus Semua</AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -95,6 +112,7 @@ export function TransactionsTable({ transactions, clearTransactions }: Transacti
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Metode</TableHead>
               <TableHead>Waktu</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -105,11 +123,17 @@ export function TransactionsTable({ transactions, clearTransactions }: Transacti
                   <TableCell className="text-right">{formatCurrency(t.total)}</TableCell>
                   <TableCell>{t.paymentMethod}</TableCell>
                   <TableCell>{format(new Date(parseInt(t.timestamp)), 'HH:mm:ss')}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(t.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <span className="sr-only">Hapus</span>
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   Belum ada transaksi hari ini.
                 </TableCell>
               </TableRow>
@@ -124,5 +148,21 @@ export function TransactionsTable({ transactions, clearTransactions }: Transacti
         transactions={transactions}
       />
     </Card>
+
+    <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Transaksi Ini?</AlertDialogTitle>
+            <AlertDialogDescription>
+            Tindakan ini tidak dapat diurungkan. Ini akan menghapus transaksi ini dari riwayat Anda.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTransactionToDelete(null)}>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Ya, Hapus</AlertDialogAction>
+        </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

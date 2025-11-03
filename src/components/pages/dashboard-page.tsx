@@ -110,6 +110,14 @@ export default function DashboardPage() {
     });
   };
 
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+    toast({
+        title: 'Transaksi Dihapus',
+        description: 'Transaksi telah dihapus dari riwayat.',
+    });
+  };
+
   if (isUserLoading || !user || isLoadingProducts) {
     return (
       <div className="flex flex-col min-h-screen w-full">
@@ -156,6 +164,7 @@ export default function DashboardPage() {
               <TransactionsTable
                 transactions={transactions}
                 clearTransactions={clearTransactions}
+                deleteTransaction={deleteTransaction}
               />
             </div>
           </div>
