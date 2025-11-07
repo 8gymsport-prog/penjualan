@@ -124,9 +124,11 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
                   <TableCell className="text-right">{formatCurrency(t.total)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {t.payments.map((p, index) => (
+                      {Array.isArray(t.payments) ? t.payments.map((p, index) => (
                         <Badge key={index} variant="secondary">{p.method}: {formatCurrency(p.amount)}</Badge>
-                      ))}
+                      )) : (
+                        <Badge variant="secondary">Tidak diketahui</Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{format(new Date(parseInt(t.timestamp)), 'HH:mm:ss')}</TableCell>
