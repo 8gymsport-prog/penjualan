@@ -5,10 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, QrCode, Wallet, Landmark } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 
-interface SalesOverviewProps {
-  transactions: Transaction[];
-}
-
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -63,7 +59,7 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
           <Wallet className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold font-headline text-accent">
+          <div className="text-2xl font-bold font-headline text-primary">
             {formatCurrency(summary.tunai)}
           </div>
           <p className="text-xs text-muted-foreground">Total pembayaran tunai</p>
@@ -75,7 +71,7 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
           <QrCode className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold font-headline text-accent">
+          <div className="text-2xl font-bold font-headline text-primary">
             {formatCurrency(summary.qr)}
           </div>
            <p className="text-xs text-muted-foreground">Total pembayaran QR</p>
@@ -87,7 +83,7 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
           <Landmark className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold font-headline text-accent">
+          <div className="text-2xl font-bold font-headline text-primary">
             {formatCurrency(summary.transfer)}
           </div>
           <p className="text-xs text-muted-foreground">Total pembayaran transfer</p>
