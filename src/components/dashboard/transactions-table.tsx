@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { ReportPreviewDialog } from "./report-preview-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -121,7 +122,13 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.productName} <span className="text-muted-foreground">x{t.quantity}</span></TableCell>
                   <TableCell className="text-right">{formatCurrency(t.total)}</TableCell>
-                  <TableCell>{t.paymentMethod}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {t.payments.map((p, index) => (
+                        <Badge key={index} variant="secondary">{p.method}: {formatCurrency(p.amount)}</Badge>
+                      ))}
+                    </div>
+                  </TableCell>
                   <TableCell>{format(new Date(parseInt(t.timestamp)), 'HH:mm:ss')}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(t.id)}>

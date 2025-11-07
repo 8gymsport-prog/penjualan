@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,16 +21,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Transaction, Product } from "@/lib/types";
-import { PlusCircle } from "lucide-react";
-import { useEffect } from "react";
+import type { Transaction, Product, Payment, PaymentMethod } from "@/lib/types";
+import { PlusCircle, Trash2, Plus, Minus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+
+const paymentSchema = z.object({
+  method: z.enum(["Tunai", "QR", "Transfer"]),
+  amount: z.coerce.number().min(1, { message: "Jumlah harus diisi." }),
+});
 
 const formSchema = z.object({
   productId: z.string().min(1, { message: "Silakan pilih produk." }),
   quantity: z.coerce.number().min(1, { message: "Kuantitas minimal 1." }),
   price: z.coerce.number(), // Price will be set automatically, no validation needed here
-  paymentMethod: z.enum(["Tunai", "QR", "Transfer"]),
+  payments: z.array(paymentSchema).min(1, { message: "Minimal ada satu metode pembayaran." }),
+}).refine(data => {
+    const totalPaid = data.payments.reduce((acc, p) => acc + p.amount, 0);
+    const totalDue = data.price * data.quantity;
+    return totalPaid === totalDue;
+}, {
+    message: "Total pembayaran harus sama dengan total harga.",
+    path: ["payments"],
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -47,18 +61,33 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
       productId: "",
       quantity: 1,
       price: 0,
-      paymentMethod: "Tunai",
+      payments: [{ method: "Tunai", amount: 0 }],
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "payments",
+  });
+
   const selectedProductId = form.watch("productId");
+  const quantity = form.watch("quantity");
+  const payments = form.watch("payments");
+  const totalDue = (form.getValues("price") * form.getValues("quantity")) || 0;
+  const totalPaid = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const remainingAmount = totalDue - totalPaid;
 
   useEffect(() => {
     const selectedProduct = products.find(p => p.id === selectedProductId);
     if (selectedProduct) {
       form.setValue("price", selectedProduct.price);
+      const newTotal = selectedProduct.price * quantity;
+      // If only one payment method, auto-update its amount
+      if (form.getValues("payments").length === 1) {
+        form.setValue("payments.0.amount", newTotal);
+      }
     }
-  }, [selectedProductId, products, form]);
+  }, [selectedProductId, quantity, products, form]);
 
 
   function onSubmit(values: FormValues) {
@@ -74,8 +103,9 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Product and Quantity */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="productId"
@@ -122,39 +152,89 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
                   <FormItem>
                     <FormLabel>Kuantitas</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input type="number" {...field} min={1}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Metode Pembayaran</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih metode" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Tunai">Tunai</SelectItem>
-                        <SelectItem value="QR">QR</SelectItem>
-                        <SelectItem value="Transfer">Transfer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
-            <Button type="submit" disabled={isProcessing || products.length === 0} className="w-full sm:w-auto">
+            
+            {/* Payment Methods */}
+            <div className="space-y-4">
+              <FormLabel>Metode Pembayaran</FormLabel>
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex items-end gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`payments.${index}.method`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih metode" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Tunai">Tunai</SelectItem>
+                            <SelectItem value="QR">QR</SelectItem>
+                            <SelectItem value="Transfer">Transfer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`payments.${index}.amount`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input type="number" placeholder="Jumlah" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+               <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ method: "Tunai", amount: remainingAmount > 0 ? remainingAmount : 0 })}
+                disabled={remainingAmount <= 0}
+                >
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Pembayaran
+              </Button>
+               {form.formState.errors.payments && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.payments.message}
+                </p>
+               )}
+            </div>
+             
+             {/* Summary */}
+            <div className="rounded-md border bg-muted/50 p-4 space-y-2">
+                <div className="flex justify-between font-medium">
+                    <span>Total Tagihan:</span>
+                    <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(totalDue)}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Total Dibayar:</span>
+                    <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(totalPaid)}</span>
+                </div>
+                 <div className={cn("flex justify-between font-semibold", remainingAmount > 0 ? "text-destructive" : "text-primary")}>
+                    <span>Sisa:</span>
+                    <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(remainingAmount)}</span>
+                </div>
+            </div>
+
+            <Button type="submit" disabled={isProcessing || products.length === 0 || remainingAmount !== 0} className="w-full sm:w-auto">
               <PlusCircle className="mr-2 h-4 w-4" />
               {isProcessing ? "Menambahkan..." : "Tambah Transaksi"}
             </Button>

@@ -1,12 +1,17 @@
 export type PaymentMethod = "Tunai" | "QR" | "Transfer";
 
+export interface Payment {
+  method: PaymentMethod;
+  amount: number;
+}
+
 export interface Transaction {
   id: string;
   productName: string;
   quantity: number;
   price: number;
   total: number;
-  paymentMethod: PaymentMethod;
+  payments: Payment[];
   timestamp: string;
   // Firestore fields
   productId: string;

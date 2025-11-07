@@ -1,4 +1,4 @@
-import type { Transaction, PaymentMethod } from "./types";
+import type { Transaction, Payment } from "./types";
 import { format } from "date-fns";
 
 const formatCurrency = (amount: number) => {
@@ -46,11 +46,14 @@ export const generateTxtReport = (transactions: Transaction[]): string => {
   });
 
   // Summary
-  const summary: Record<PaymentMethod, number> = { Tunai: 0, QR: 0, Transfer: 0 };
+  const summary: Record<string, number> = { Tunai: 0, QR: 0, Transfer: 0 };
   let grandTotal = 0;
 
   transactions.forEach((t) => {
-    summary[t.paymentMethod] += t.total;
+    t.payments.forEach(p => {
+        if (!summary[p.method]) summary[p.method] = 0;
+        summary[p.method] += p.amount;
+    });
     grandTotal += t.total;
   });
 

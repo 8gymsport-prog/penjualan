@@ -10,7 +10,7 @@ import {
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import useLocalStorage from '@/hooks/use-local-storage';
-import type { Transaction, Product } from '@/lib/types';
+import type { Transaction, Product, Payment } from '@/lib/types';
 import { SalesOverview } from '@/components/dashboard/sales-overview';
 import { TransactionForm } from '@/components/dashboard/transaction-form';
 import { TransactionsTable } from '@/components/dashboard/transactions-table';
@@ -82,6 +82,8 @@ export default function DashboardPage() {
       return;
     }
 
+    const totalAmount = newTransactionData.quantity * selectedProduct.price;
+
     const newTransaction: Transaction = {
       ...newTransactionData,
       id: uuidv4(),
@@ -89,7 +91,7 @@ export default function DashboardPage() {
       price: selectedProduct.price,
       userId: user!.uid,
       timestamp: Date.now().toString(),
-      total: newTransactionData.quantity * selectedProduct.price,
+      total: totalAmount,
     };
     
     setTransactions(prevTransactions => [...prevTransactions, newTransaction]);
