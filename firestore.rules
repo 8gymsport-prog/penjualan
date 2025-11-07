@@ -50,8 +50,8 @@ service cloud.firestore {
       }
 
       allow create: if isSignedIn() && isOwner(userId);
-      allow get: if isSignedIn();
-      allow list: if isSignedIn(); // Allow listing to find user by username
+      allow get: if true;
+      allow list: if true; // Allow listing to find user by username
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
