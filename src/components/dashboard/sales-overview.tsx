@@ -26,13 +26,19 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
       transfer: 0,
     };
 
+    if (!transactions) {
+      return initialState;
+    }
+
     return transactions.reduce((acc, t) => {
       acc.totalSales += t.total;
-      t.payments.forEach(p => {
-        if (p.method === "Tunai") acc.tunai += p.amount;
-        if (p.method === "QR") acc.qr += p.amount;
-        if (p.method === "Transfer") acc.transfer += p.amount;
-      });
+      if (t.payments) {
+        t.payments.forEach(p => {
+          if (p.method === "Tunai") acc.tunai += p.amount;
+          if (p.method === "QR") acc.qr += p.amount;
+          if (p.method === "Transfer") acc.transfer += p.amount;
+        });
+      }
       return acc;
     }, initialState);
   }, [transactions]);
