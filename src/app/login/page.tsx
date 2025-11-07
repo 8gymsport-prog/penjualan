@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, KeyRound, AtSign, User } from 'lucide-react';
 import KassaKilatIcon from '@/app/icon.svg';
 import Image from 'next/image';
 
@@ -45,6 +45,7 @@ export default function LoginPage() {
 
   const handleSignUp = async () => {
     if (!auth || !firestore) return;
+    setIsLoading(true);
     if (username.length < 3) {
       toast({
         variant: 'destructive',
@@ -59,7 +60,9 @@ export default function LoginPage() {
     const usersCol = collection(firestore, 'users');
     const usernameQuery = query(usersCol, where('username', '==', username));
     
-    getDocs(usernameQuery).then(async (usernameSnapshot) => {
+    try {
+        const usernameSnapshot = await getDocs(usernameQuery);
+
         if (!usernameSnapshot.empty) {
           toast({
             variant: 'destructive',
@@ -70,50 +73,41 @@ export default function LoginPage() {
           return;
         }
 
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const newUser = userCredential.user;
-            
-            // Save user profile with username
-            await setDoc(doc(firestore, 'users', newUser.uid), {
-              id: newUser.uid,
-              username: username,
-              email: newUser.email,
-            });
-
-            toast({
-              title: 'Pendaftaran Berhasil',
-              description: 'Akun Anda telah dibuat. Silakan masuk.',
-            });
-            setIsSignUp(false); // Switch to login view after successful sign up
-        } catch (error: any) {
-             let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-              if (error.code === 'auth/email-already-in-use') {
-                errorMessage = 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
-              } else if (error.code === 'auth/weak-password') {
-                errorMessage = 'Password terlalu lemah. Gunakan minimal 6 karakter.';
-              }
-              toast({
-                variant: 'destructive',
-                title: 'Pendaftaran Gagal',
-                description: errorMessage,
-              });
-        } finally {
-            setIsLoading(false);
-        }
-
-    }).catch(error => {
-        const permissionError = new FirestorePermissionError({
-            path: usersCol.path,
-            operation: 'list',
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const newUser = userCredential.user;
+        
+        // Save user profile with username
+        await setDoc(doc(firestore, 'users', newUser.uid), {
+          id: newUser.uid,
+          username: username,
+          email: newUser.email,
         });
-        errorEmitter.emit('permission-error', permissionError);
+
+        toast({
+          title: 'Pendaftaran Berhasil',
+          description: 'Akun Anda telah dibuat. Silakan masuk.',
+        });
+        setIsSignUp(false); // Switch to login view after successful sign up
+    } catch (error: any) {
+         let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+          if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.';
+          } else if (error.code === 'auth/weak-password') {
+            errorMessage = 'Password terlalu lemah. Gunakan minimal 6 karakter.';
+          }
+          toast({
+            variant: 'destructive',
+            title: 'Pendaftaran Gagal',
+            description: errorMessage,
+          });
+    } finally {
         setIsLoading(false);
-    });
+    }
   };
 
   const handleSignIn = async () => {
      if (!auth || !firestore) return;
+     setIsLoading(true);
      let userEmail = email; // Assume input is an email by default
 
      // If input doesn't contain '@', it's a username, so we need to find the email
@@ -121,7 +115,8 @@ export default function LoginPage() {
         const usersCol = collection(firestore, 'users');
         const usernameQuery = query(usersCol, where('username', '==', email));
         
-        getDocs(usernameQuery).then(async (querySnapshot) => {
+        try {
+            const querySnapshot = await getDocs(usernameQuery);
             if (querySnapshot.empty) {
               // We throw a specific string to be caught and translated to the user.
               throw new Error('auth/user-not-found');
@@ -130,43 +125,25 @@ export default function LoginPage() {
             const userData = querySnapshot.docs[0].data();
             userEmail = userData.email;
 
-            try {
-                await signInWithEmailAndPassword(auth, userEmail, password);
-                toast({
-                    title: 'Login Berhasil',
-                    description: 'Selamat datang kembali!',
-                });
-                // The useEffect will now handle the redirection
-            } catch(error: any) {
-                // Handle credential errors from signInWithEmailAndPassword
-                let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    errorMessage = 'Email/Username atau password yang Anda masukkan salah.';
-                }
-                toast({
-                    variant: 'destructive',
-                    title: 'Login Gagal',
-                    description: errorMessage,
-                });
-            } finally {
-                setIsLoading(false);
+            await signInWithEmailAndPassword(auth, userEmail, password);
+            toast({
+                title: 'Login Berhasil',
+                description: 'Selamat datang kembali!',
+            });
+            // The useEffect will now handle the redirection
+        } catch(error: any) {
+            let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
+            if (error.message === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                errorMessage = 'Email/Username atau password yang Anda masukkan salah.';
             }
-        }).catch(error => {
-            if (error.message === 'auth/user-not-found') {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Login Gagal',
-                    description: 'Email/Username atau password yang Anda masukkan salah.',
-                });
-            } else {
-                 const permissionError = new FirestorePermissionError({
-                    path: usersCol.path,
-                    operation: 'list',
-                });
-                errorEmitter.emit('permission-error', permissionError);
-            }
+             toast({
+                variant: 'destructive',
+                title: 'Login Gagal',
+                description: errorMessage,
+            });
+        } finally {
             setIsLoading(false);
-        });
+        }
      } else {
         // Sign in with email
         try {
@@ -189,14 +166,10 @@ export default function LoginPage() {
              setIsLoading(false);
         }
      }
-
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) return;
-    setIsLoading(true);
-
     if (isSignUp) {
         await handleSignUp();
     } else {
@@ -209,98 +182,95 @@ export default function LoginPage() {
   if (isUserLoading || user) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
-            <p>Loading...</p>
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 font-body">
+        <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"><div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--background)),transparent)]"></div></div>
+      <Card className="w-full max-w-sm border-2 shadow-2xl shadow-primary/10">
         <form onSubmit={handleSubmit}>
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
               <Image
                 src={KassaKilatIcon}
                 alt="Ikon 店"
                 width={40}
                 height={40}
+                className="transition-transform duration-300 group-hover:scale-110"
               />
             </div>
-            <CardTitle className="text-3xl font-headline text-primary">
-              店
+            <CardTitle className="text-3xl font-bold text-primary">
+              {isSignUp ? 'Buat Akun' : 'Selamat Datang'}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="font-semibold text-muted-foreground">
               {isSignUp
-                ? 'Buat akun baru Anda.'
-                : 'Masuk untuk mengelola penjualan Anda.'}
+                ? 'Mulai perjalanan Anda bersama kami.'
+                : 'Masuk untuk melanjutkan ke toko Anda.'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-2">
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   id="username"
                   type="text"
-                  placeholder="pilih username"
+                  placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   disabled={isLoading}
+                  className="pl-10 font-semibold"
                 />
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">{isSignUp ? 'Email' : 'Email atau Username'}</Label>
+            <div className="relative">
+              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 id="email"
                 type="text"
-                placeholder={isSignUp ? 'anda@email.com' : 'email atau username anda'}
+                placeholder={isSignUp ? 'Email' : 'Email atau Username'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                className="pl-10 font-semibold"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                className="pl-10 font-semibold"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading
-                ? 'Memproses...'
-                : isSignUp
-                ? 'Daftar'
-                : 'Masuk'}
-              {!isLoading &&
-                (isSignUp ? (
-                  <UserPlus className="ml-2 h-4 w-4" />
-                ) : (
-                  <LogIn className="ml-2 h-4 w-4" />
-                ))}
+            <Button type="submit" className="w-full font-bold" disabled={isLoading}>
+              {isLoading && <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+              {isSignUp ? 'Daftar Sekarang' : 'Masuk'}
             </Button>
-            <Button
-              type="button"
-              variant="link"
-              className="w-full"
-              onClick={() => setIsSignUp(!isSignUp)}
-              disabled={isLoading}
-            >
-              {isSignUp
-                ? 'Sudah punya akun? Masuk'
-                : 'Belum punya akun? Daftar'}
-            </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              {isSignUp ? 'Sudah punya akun?' : 'Belum punya akun?'}
+              <Button
+                type="button"
+                variant="link"
+                className="p-1 font-bold"
+                onClick={() => setIsSignUp(!isSignUp)}
+                disabled={isLoading}
+              >
+                {isSignUp ? 'Masuk di sini' : 'Daftar sekarang'}
+              </Button>
+            </p>
           </CardFooter>
         </form>
       </Card>
