@@ -39,7 +39,8 @@ const formSchema = z.object({
 }).refine(data => {
     const totalPaid = data.payments.reduce((acc, p) => acc + p.amount, 0);
     const totalDue = data.price * data.quantity;
-    return totalPaid === totalDue;
+    // Use a small tolerance for floating point comparisons
+    return Math.abs(totalPaid - totalDue) < 0.01;
 }, {
     message: "Total pembayaran harus sama dengan total harga.",
     path: ["payments"],
@@ -74,7 +75,7 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
   const quantity = form.watch("quantity");
   const payments = form.watch("payments");
   const totalDue = (form.getValues("price") * form.getValues("quantity")) || 0;
-  const totalPaid = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const totalPaid = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
   const remainingAmount = totalDue - totalPaid;
 
   useEffect(() => {
@@ -228,7 +229,7 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
                     <span>Total Dibayar:</span>
                     <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(totalPaid)}</span>
                 </div>
-                 <div className={cn("flex justify-between font-semibold", remainingAmount > 0 ? "text-destructive" : "text-primary")}>
+                 <div className={cn("flex justify-between font-semibold", remainingAmount !== 0 ? "text-destructive" : "text-primary")}>
                     <span>Sisa:</span>
                     <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(remainingAmount)}</span>
                 </div>
