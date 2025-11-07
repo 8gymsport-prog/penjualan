@@ -76,54 +76,80 @@ export const exportToExcel = (transactions: Transaction[], username: string) => 
     const fileName = `Laporan_Penjualan_${username}_${format(now, "yyyyMMdd")}.xlsx`;
 
     const dataForExcel = transactions.map((t, index) => {
-        const totalPembayaran = Array.isArray(t.payments) ? t.payments.reduce((acc, p) => acc + p.amount, 0) : 0;
+        const paymentDetails = {
+            Tunai: 0,
+            QR: 0,
+            Transfer: 0
+        };
+
+        if (Array.isArray(t.payments)) {
+            t.payments.forEach(p => {
+                if (p.method in paymentDetails) {
+                    paymentDetails[p.method as keyof typeof paymentDetails] += p.amount;
+                }
+            });
+        }
+        
         return {
             "No": index + 1,
             "ID Transaksi": t.id,
-            "Nama Produk": t.productName,
-            "Total Penjualan": t.total,
-            "Pembayaran": totalPembayaran,
-            "Saldo Akhir": t.total - totalPembayaran,
             "Waktu": format(new Date(parseInt(t.timestamp)), 'yyyy-MM-dd HH:mm:ss'),
+            "Nama Produk": t.productName,
+            "Kuantitas": t.quantity,
+            "Harga Satuan": t.price,
+            "Total Penjualan": t.total,
+            "Tunai": paymentDetails.Tunai,
+            "QR": paymentDetails.QR,
+            "Transfer": paymentDetails.Transfer,
         };
     });
 
     const totalPenjualan = dataForExcel.reduce((sum, item) => sum + item['Total Penjualan'], 0);
-    const totalPembayaran = dataForExcel.reduce((sum, item) => sum + item['Pembayaran'], 0);
-    const totalSaldo = dataForExcel.reduce((sum, item) => sum + item['Saldo Akhir'], 0);
+    const totalTunai = dataForExcel.reduce((sum, item) => sum + item['Tunai'], 0);
+    const totalQR = dataForExcel.reduce((sum, item) => sum + item['QR'], 0);
+    const totalTransfer = dataForExcel.reduce((sum, item) => sum + item['Transfer'], 0);
+    const totalKuantitas = dataForExcel.reduce((sum, item) => sum + item['Kuantitas'], 0);
 
     const ws = XLSX.utils.json_to_sheet([]);
 
-    // Add headers and title
     XLSX.utils.sheet_add_aoa(ws, [
         [`Laporan Penjualan - ${username}`],
         [`Periode: ${period}`]
     ], { origin: "A1" });
 
-
-    // Add table data
     XLSX.utils.sheet_add_json(ws, dataForExcel, { origin: "A4", skipHeader: false });
-
-    // Add total row
-    XLSX.utils.sheet_add_aoa(ws, [
-        ["", "", "Total", totalPenjualan, totalPembayaran, totalSaldo]
-    ], { origin: -1 }); // -1 means append to the end
     
-    // Styling and Merging
+    // Add total row at the end
+    const totalRow = [
+        "", // No
+        "", // ID
+        "", // Waktu
+        "Total", // Nama Produk
+        totalKuantitas, // Kuantitas
+        "", // Harga Satuan
+        totalPenjualan, // Total Penjualan
+        totalTunai, // Tunai
+        totalQR, // QR
+        totalTransfer // Transfer
+    ];
+    XLSX.utils.sheet_add_aoa(ws, [totalRow], { origin: -1 });
+
     ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Title
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }, // Period
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } },
     ];
 
-    // Set column widths
     ws['!cols'] = [
-        { wch: 5 }, // No
-        { wch: 38 }, // ID
-        { wch: 20 }, // Nama Produk
-        { wch: 15 }, // Total Penjualan
-        { wch: 15 }, // Pembayaran
-        { wch: 15 }, // Saldo Akhir
-        { wch: 20 }, // Waktu
+        { wch: 5 },   // No
+        { wch: 38 },  // ID
+        { wch: 20 },  // Waktu
+        { wch: 25 },  // Nama Produk
+        { wch: 10 },  // Kuantitas
+        { wch: 15 },  // Harga Satuan
+        { wch: 15 },  // Total Penjualan
+        { wch: 15 },  // Tunai
+        { wch: 15 },  // QR
+        { wch: 15 },  // Transfer
     ];
 
     const wb = XLSX.utils.book_new();
