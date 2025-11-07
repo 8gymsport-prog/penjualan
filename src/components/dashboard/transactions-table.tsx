@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Transaction } from "@/lib/types";
-import { Trash2, FileText } from "lucide-react";
+import { Trash2, FileText, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -27,6 +27,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { ReportPreviewDialog } from "./report-preview-dialog";
 import { Badge } from "@/components/ui/badge";
+import { exportToExcel } from "@/lib/reports";
+import { useUser, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
+import { doc } from 'firebase/firestore';
+
 
 interface TransactionsTableProps {
   transactions: Transaction[];
@@ -47,7 +51,15 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { user } = useUser();
+  const firestore = useFirestore();
 
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user]);
+
+  const { data: userProfile } = useDoc(userProfileRef);
 
   const handleClear = () => {
     clearTransactions();
@@ -66,6 +78,11 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
     setIsDeleteAlertOpen(false);
     setTransactionToDelete(null);
   }
+  
+  const handleExport = () => {
+    const username = userProfile?.username || user?.displayName || "Pengguna";
+    exportToExcel(transactions, username);
+  }
 
   return (
     <>
@@ -80,6 +97,10 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
                  <Button variant="outline" size="sm" onClick={() => setIsPreviewOpen(true)} disabled={transactions.length === 0}>
                     <FileText className="mr-2 h-4 w-4" />
                     Preview Laporan
+                 </Button>
+                 <Button variant="outline" size="sm" onClick={handleExport} disabled={transactions.length === 0}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Ekspor ke Excel
                  </Button>
                  <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
                   <AlertDialogTrigger asChild>
