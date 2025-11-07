@@ -50,10 +50,12 @@ export const generateTxtReport = (transactions: Transaction[]): string => {
   let grandTotal = 0;
 
   transactions.forEach((t) => {
-    t.payments.forEach(p => {
-        if (!summary[p.method]) summary[p.method] = 0;
-        summary[p.method] += p.amount;
-    });
+    if (Array.isArray(t.payments)) {
+        t.payments.forEach(p => {
+            if (!summary[p.method]) summary[p.method] = 0;
+            summary[p.method] += p.amount;
+        });
+    }
     grandTotal += t.total;
   });
 
