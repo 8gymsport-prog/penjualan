@@ -83,7 +83,7 @@ export const exportToPdf = (transactions: Transaction[], username: string) => {
     const fileName = `Laporan_Penjualan_${username}_${format(now, "yyyyMMdd")}.pdf`;
 
     const tableHead = [
-      ["No", "ID Transaksi", "Waktu", "Nama Produk", "Kuantitas", "Harga Satuan", "Total Penjualan", "Tunai", "QR", "Transfer"]
+      ["No", "Waktu", "Nama Produk", "Kuantitas", "Harga Satuan", "Total Penjualan", "Tunai", "QR", "Transfer"]
     ];
 
     let totalQuantity = 0;
@@ -105,7 +105,6 @@ export const exportToPdf = (transactions: Transaction[], username: string) => {
 
         return [
             index + 1,
-            t.id,
             format(new Date(parseInt(t.timestamp)), 'yyyy-MM-dd HH:mm:ss'),
             t.productName,
             t.quantity,
@@ -118,7 +117,7 @@ export const exportToPdf = (transactions: Transaction[], username: string) => {
     });
     
     const tableFoot = [
-        ["", "", "", "Total", totalQuantity, "", formatCurrencyWithIDR(totalSales), formatCurrencyWithIDR(totalTunai), formatCurrencyWithIDR(totalQR), formatCurrencyWithIDR(totalTransfer)]
+        ["", "", "Total", totalQuantity, "", formatCurrencyWithIDR(totalSales), formatCurrencyWithIDR(totalTunai), formatCurrencyWithIDR(totalQR), formatCurrencyWithIDR(totalTransfer)]
     ];
 
     // Add Title
@@ -140,7 +139,8 @@ export const exportToPdf = (transactions: Transaction[], username: string) => {
         },
         footStyles: {
             fontStyle: 'bold',
-            fillColor: [244, 244, 245] // Muted color
+            fillColor: [244, 244, 245], // Muted color
+            textColor: [0, 0, 0] // Explicitly set text color to black for footer
         },
         didDrawPage: (data) => {
             // Add Footer
