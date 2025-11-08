@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { Transaction } from "@/lib/types";
-import { Trash2, FileText, FileType } from "lucide-react";
+import type { Transaction, Product } from "@/lib/types";
+import { Trash2, FileText, FileType, Edit } from "lucide-react";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -30,11 +30,14 @@ import { Badge } from "@/components/ui/badge";
 import { exportToPdf } from "@/lib/reports";
 import { useUser, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from 'firebase/firestore';
+import { EditTransactionDialog } from "./edit-transaction-dialog";
 
 
 interface TransactionsTableProps {
   transactions: Transaction[];
+  products: Product[];
   clearTransactions: () => void;
+  updateTransaction: (transaction: Transaction) => void;
   deleteTransaction: (id: string) => void;
 }
 
@@ -46,11 +49,15 @@ const formatCurrency = (amount: number) => {
     }).format(amount);
   };
 
-export function TransactionsTable({ transactions, clearTransactions, deleteTransaction }: TransactionsTableProps) {
+export function TransactionsTable({ transactions, products, clearTransactions, deleteTransaction, updateTransaction }: TransactionsTableProps) {
   const [isClearAlertOpen, setIsClearAlertOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
+
   const { user } = useUser();
   const firestore = useFirestore();
 
@@ -82,6 +89,17 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
   const handleExport = () => {
     const username = userProfile?.username || user?.displayName || "Pengguna";
     exportToPdf(transactions, username);
+  }
+
+  const handleOpenEditDialog = (transaction: Transaction) => {
+    setTransactionToEdit(transaction);
+    setIsEditDialogOpen(true);
+  }
+
+  const handleSaveEdit = (updatedTransaction: Transaction) => {
+    updateTransaction(updatedTransaction);
+    setIsEditDialogOpen(false);
+    setTransactionToEdit(null);
   }
 
   return (
@@ -153,7 +171,11 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
                     </div>
                   </TableCell>
                   <TableCell>{format(new Date(parseInt(t.timestamp)), 'HH:mm:ss')}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right space-x-1">
+                     <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(t)}>
+                        <Edit className="h-4 w-4 text-muted-foreground" />
+                        <span className="sr-only">Edit</span>
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(t.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                         <span className="sr-only">Hapus</span>
@@ -193,6 +215,16 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
         </AlertDialogFooter>
         </AlertDialogContent>
     </AlertDialog>
+    
+    {transactionToEdit && (
+      <EditTransactionDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        transaction={transactionToEdit}
+        products={products}
+        onSave={handleSaveEdit}
+      />
+    )}
     </>
   );
 }

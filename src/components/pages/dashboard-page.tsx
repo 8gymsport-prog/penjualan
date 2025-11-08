@@ -103,6 +103,33 @@ export default function DashboardPage() {
 
     setIsProcessing(false);
   };
+  
+  const updateTransaction = (updatedTransaction: Transaction) => {
+    const selectedProduct = products?.find(p => p.id === updatedTransaction.productId);
+     if (!selectedProduct) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Produk yang dipilih tidak valid.',
+      });
+      return;
+    }
+
+    const transactionWithDetails: Transaction = {
+        ...updatedTransaction,
+        productName: selectedProduct.name,
+        price: selectedProduct.price,
+        total: selectedProduct.price * updatedTransaction.quantity
+    };
+
+    setTransactions(prev => 
+        prev.map(t => t.id === transactionWithDetails.id ? transactionWithDetails : t)
+    );
+    toast({
+        title: "Transaksi Diperbarui",
+        description: "Detail transaksi telah berhasil disimpan."
+    });
+  };
 
   const clearTransactions = async () => {
     setTransactions([]);
@@ -165,6 +192,8 @@ export default function DashboardPage() {
               <div className="xl:col-span-3">
                 <TransactionsTable
                   transactions={transactions}
+                  products={products || []}
+                  updateTransaction={updateTransaction}
                   clearTransactions={clearTransactions}
                   deleteTransaction={deleteTransaction}
                 />
