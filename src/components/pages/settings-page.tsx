@@ -11,16 +11,27 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, Lock, Camera } from 'lucide-react';
-import { updatePassword, updateProfile, User } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { User as UserIcon, Lock, Camera, Moon, Sun, Trash2, ShieldX } from 'lucide-react';
+import { updatePassword, updateProfile, deleteUser as deleteAuthUser } from 'firebase/auth';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +40,9 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 
 function getCroppedImg(
   image: HTMLImageElement,
@@ -68,6 +82,7 @@ export default function SettingsPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const [username, setUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -79,6 +94,7 @@ export default function SettingsPage() {
   const [crop, setCrop] = useState<Crop>();
   const [src, setSrc] = useState<string | null>(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   const userProfileRef = useMemoFirebase(() => {
@@ -144,6 +160,7 @@ export default function SettingsPage() {
       await setDoc(
         userDocRef,
         {
+          id: auth.currentUser.uid,
           username: username,
           email: auth.currentUser.email, // Make sure email is saved
           profilePictureUrl: photo,
@@ -205,6 +222,31 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!auth?.currentUser || !firestore) return;
+    setIsUpdating(true);
+    try {
+        const userId = auth.currentUser.uid;
+        // Delete Firestore document first
+        await deleteDoc(doc(firestore, 'users', userId));
+        // Then delete the auth user
+        await deleteAuthUser(auth.currentUser);
+
+        toast({
+            title: 'Akun Dihapus',
+            description: 'Akun Anda telah berhasil dihapus secara permanen.',
+        });
+        // The auth state listener in the provider will handle the redirect to /login
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Gagal Menghapus Akun',
+            description: 'Terjadi kesalahan. Anda mungkin perlu login ulang terlebih dahulu.',
+        });
+        setIsUpdating(false);
+    }
+  };
+
   if (isUserLoading || isProfileLoading || !user) {
     return (
        <div className="flex flex-col min-h-screen w-full">
@@ -219,6 +261,7 @@ export default function SettingsPage() {
   }
 
   return (
+    <>
     <div className="flex min-h-screen w-full flex-col">
       <Header />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -279,6 +322,31 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Tampilan
+              </CardTitle>
+              <CardDescription>
+                Sesuaikan tampilan aplikasi sesuai preferensi Anda.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="dark-mode" className="flex items-center gap-2">
+                  {theme === 'dark' ? <Moon /> : <Sun />}
+                  <span>Mode Gelap</span>
+                </Label>
+                <Switch
+                  id="dark-mode"
+                  checked={theme === 'dark'}
+                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
 
           <Card>
             <CardHeader>
@@ -317,6 +385,28 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+          
+           <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <ShieldX /> Zona Berbahaya
+              </CardTitle>
+              <CardDescription>
+                Tindakan di bawah ini bersifat permanen dan tidak dapat diurungkan.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between">
+                <div>
+                    <p className="font-semibold">Hapus Akun Anda</p>
+                    <p className="text-sm text-muted-foreground">Semua data Anda akan dihapus secara permanen.</p>
+                </div>
+                <Button variant="destructive" onClick={() => setIsDeleteAlertOpen(true)} disabled={isUpdating}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Hapus Akun
+                </Button>
+            </CardContent>
+          </Card>
+
         </div>
       </main>
 
@@ -363,5 +453,25 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
     </div>
+
+    <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda Yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+            Tindakan ini tidak dapat diurungkan. Ini akan menghapus akun beserta seluruh data Anda secara permanen.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+             onClick={handleDeleteAccount}>
+             Ya, Hapus Akun Saya
+            </AlertDialogAction>
+        </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
