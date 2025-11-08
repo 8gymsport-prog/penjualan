@@ -91,20 +91,21 @@ service cloud.firestore {
       allow get, list: if isSignedIn() && isParticipant();
       allow create: if isSignedIn() && isCreatingParticipant();
       allow update: if isSignedIn() && isParticipant();
-    }
-    
-    match /chats/{chatId}/messages/{messageId} {
-       // A user can read/write messages in a chat if they are a participant in that chat.
-       function isChatParticipant() {
+      
+      // Rules for the 'messages' subcollection
+      match /messages/{messageId} {
+        function isChatParticipant() {
           return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
-       }
-      
-      // Allow list for any signed-in user. The client-side query must enforce that
-      // the user is a participant. `get` calls are not allowed for `list` operations.
-      allow list: if isSignedIn();
-      
-      // Allow get/write if the user is a participant of the parent chat document.
-      allow get, write: if isSignedIn() && isChatParticipant();
+        }
+
+        // Allow list operation for any signed-in user.
+        // The client query must enforce that the user is a participant.
+        // `get()` calls are not allowed in rules for `list` operations.
+        allow list: if isSignedIn();
+
+        // Allow get and write (create, update, delete) if the user is a participant of the parent chat.
+        allow get, write: if isSignedIn() && isChatParticipant();
+      }
     }
   }
 }
