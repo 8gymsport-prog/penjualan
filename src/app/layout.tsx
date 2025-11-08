@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 import { FirebaseClientProvider } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "店",
@@ -28,6 +29,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <div className="fixed inset-0 -z-20">
+            <Image
+              src="https://images.unsplash.com/photo-1534088568595-a066f410bcda?q=80&w=1951&auto=format&fit=crop"
+              alt="Bright sky background"
+              fill
+              style={{ objectFit: 'cover' }}
+              priority
+              data-ai-hint="bright sky"
+            />
+            <div className="absolute inset-0 bg-background/30 dark:bg-background/70 backdrop-blur-[2px]"></div>
+          </div>
           <FirebaseClientProvider>
             {children}
             <Toaster />
