@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Settings, Package } from 'lucide-react';
+import { LogOut, Settings, Package, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import KassaKilatIcon from '@/app/icon.svg';
@@ -42,16 +42,11 @@ export function Header() {
   const displayName =
     userProfile?.username || user?.displayName || user?.email || 'User';
   const photoURL = userProfile?.profilePictureUrl;
+  const isSuperAdmin = userProfile?.role === 'superadmin';
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card/80 px-4 backdrop-blur-sm sm:px-6">
       <Link href="/" className="flex items-center gap-2">
-        <Image
-          src={KassaKilatIcon}
-          alt="Ikon 店"
-          width={32}
-          height={32}
-        />
         <h1 className="hidden text-xl font-semibold font-headline text-primary sm:block">
           店
         </h1>
@@ -75,6 +70,13 @@ export function Header() {
             </span>
           </div>
         ) : null}
+        {isSuperAdmin && (
+          <Link href="/admin/users">
+            <Button variant="ghost" size="icon" aria-label="User Management">
+              <ShieldCheck className="h-5 w-5" />
+            </Button>
+          </Link>
+        )}
         <Link href="/products">
           <Button variant="ghost" size="icon" aria-label="Products">
             <Package className="h-5 w-5" />

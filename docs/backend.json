@@ -22,6 +22,14 @@
         "profilePictureUrl": {
           "type": "string",
           "description": "URL of the user's profile picture."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user.",
+          "enum": [
+            "user",
+            "superadmin"
+          ]
         }
       },
       "required": [

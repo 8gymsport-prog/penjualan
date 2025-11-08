@@ -136,13 +136,17 @@ export default function SettingsPage() {
         await updateProfile(auth.currentUser, { displayName: username });
       }
 
-      // Update Firestore document with username and new photo
+      // Automatically assign 'superadmin' role to 'Rakarmp'
+      const userRole = username === 'Rakarmp' ? 'superadmin' : userProfile?.role || 'user';
+
+      // Update Firestore document with username, new photo, and role
       const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
       await setDoc(
         userDocRef,
         {
           username: username,
           profilePictureUrl: photo,
+          role: userRole,
         },
         { merge: true }
       );
