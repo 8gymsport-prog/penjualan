@@ -86,7 +86,7 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
 
   return (
     <>
-    <Card>
+    <Card className="transparent-card">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>

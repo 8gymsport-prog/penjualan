@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, QrCode, Wallet, Landmark } from "lucide-react";
 import type { Transaction } from "@/lib/types";
 
+interface SalesOverviewProps {
+  transactions: Transaction[];
+}
+
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -41,7 +45,7 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
+      <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Penjualan</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -53,7 +57,7 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
           <p className="text-xs text-muted-foreground">Total pendapatan hari ini</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tunai</CardTitle>
           <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -65,7 +69,7 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
           <p className="text-xs text-muted-foreground">Total pembayaran tunai</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">QR Code</CardTitle>
           <QrCode className="h-4 w-4 text-muted-foreground" />
@@ -77,7 +81,7 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
            <p className="text-xs text-muted-foreground">Total pembayaran QR</p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Transfer</CardTitle>
           <Landmark className="h-4 w-4 text-muted-foreground" />

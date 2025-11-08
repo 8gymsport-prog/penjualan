@@ -20,6 +20,7 @@ import {
   collection,
 } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
+import { VideoBackground } from '@/components/dashboard/video-background';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -122,53 +123,59 @@ export default function DashboardPage() {
 
   if (isUserLoading || !user || isLoadingProducts) {
     return (
-      <div className="flex flex-col min-h-screen w-full">
-        <Header />
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          <Skeleton className="h-8 w-64" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-          </div>
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-            <div className="xl:col-span-3">
-              <Skeleton className="h-60" />
+      <>
+        <VideoBackground />
+        <div className="relative z-10 flex flex-col min-h-screen w-full">
+          <Header />
+          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+            <Skeleton className="h-8 w-64 bg-slate-200/80" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Skeleton className="h-28 bg-slate-200/80" />
+              <Skeleton className="h-28 bg-slate-200/80" />
+              <Skeleton className="h-28 bg-slate-200/80" />
+              <Skeleton className="h-28 bg-slate-200/80" />
             </div>
-            <div className="xl:col-span-3">
-              <Skeleton className="h-80" />
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="xl:col-span-3">
+                <Skeleton className="h-60 bg-slate-200/80" />
+              </div>
+              <div className="xl:col-span-3">
+                <Skeleton className="h-80 bg-slate-200/80" />
+              </div>
             </div>
-          </div>
-        </main>
-      </div>
+          </main>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <Header />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="flex flex-col gap-4 md:gap-8">
-          <SalesOverview transactions={transactions} />
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-            <div className="xl:col-span-3">
-              <TransactionForm
-                addTransaction={addTransaction}
-                isProcessing={isProcessing}
-                products={products || []}
-              />
-            </div>
-            <div className="xl:col-span-3">
-              <TransactionsTable
-                transactions={transactions}
-                clearTransactions={clearTransactions}
-                deleteTransaction={deleteTransaction}
-              />
+    <>
+      <VideoBackground />
+      <div className="relative z-10 flex min-h-screen w-full flex-col">
+        <Header />
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+          <div className="flex flex-col gap-4 md:gap-8">
+            <SalesOverview transactions={transactions} />
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="xl:col-span-3">
+                <TransactionForm
+                  addTransaction={addTransaction}
+                  isProcessing={isProcessing}
+                  products={products || []}
+                />
+              </div>
+              <div className="xl:col-span-3">
+                <TransactionsTable
+                  transactions={transactions}
+                  clearTransactions={clearTransactions}
+                  deleteTransaction={deleteTransaction}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 }

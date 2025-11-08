@@ -98,7 +98,7 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
   }
 
   return (
-    <Card>
+    <Card className="transparent-card">
       <CardHeader>
         <CardTitle className="font-headline text-lg">Tambah Transaksi Baru</CardTitle>
       </CardHeader>
