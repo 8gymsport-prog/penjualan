@@ -45,23 +45,32 @@ export default function UserManagementPage() {
   const { data: currentUserProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
 
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore || currentUserProfile?.role !== 'superadmin') return null;
+    // Wait for the profile to load and confirm the user is a superadmin before creating the query.
+    if (!firestore || isProfileLoading || currentUserProfile?.role !== 'superadmin') return null;
     return collection(firestore, 'users');
-  }, [firestore, currentUserProfile]);
+  }, [firestore, currentUserProfile, isProfileLoading]);
 
   const { data: users, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersQuery);
 
   useEffect(() => {
+    // If auth state is determined and there's no user, redirect to login.
     if (!isUserLoading && !user) {
       router.push('/login');
+      return; // Stop further execution
     }
-    // Redirect if user is not a super admin after profile loads
-    if (!isProfileLoading && currentUserProfile?.role !== 'superadmin') {
-        router.push('/');
+    
+    // If profile loading is finished and the user is NOT a superadmin, redirect.
+    if (!isUserLoading && !isProfileLoading && currentUserProfile && currentUserProfile.role !== 'superadmin') {
+      router.push('/');
     }
   }, [user, isUserLoading, router, currentUserProfile, isProfileLoading]);
 
-  if (isUserLoading || isProfileLoading || isLoadingUsers || !currentUserProfile || currentUserProfile.role !== 'superadmin') {
+  // Combined loading state: show spinner if auth, profile, or user list is loading.
+  const isLoading = isUserLoading || isProfileLoading || isLoadingUsers;
+
+  // We need to wait for the profile to load to know if we should render the page or redirect.
+  // So, if we are loading, or if the profile isn't loaded yet, show the spinner.
+  if (isLoading || !currentUserProfile) {
     return (
       <div className="flex flex-col min-h-screen w-full">
         <Header />
@@ -72,6 +81,12 @@ export default function UserManagementPage() {
         </main>
       </div>
     );
+  }
+
+  // After loading, if the user is still not a superadmin (e.g., direct URL access), don't render.
+  // The useEffect will handle the redirect, but this prevents a flash of content.
+  if (currentUserProfile.role !== 'superadmin') {
+    return null; 
   }
 
   return (
