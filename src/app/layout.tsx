@@ -6,7 +6,6 @@ import "./globals.css";
 import { FirebaseClientProvider, useUser } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
 import Image from "next/image";
-import { ChatWidget } from "@/components/chat/chat-widget";
 
 // Metadata tidak bisa diekspor dari Client Component, jadi kita hapus.
 // Jika diperlukan, bisa dipindahkan ke file page.tsx terpisah.
@@ -16,7 +15,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      {user && <ChatWidget />}
     </>
   );
 }

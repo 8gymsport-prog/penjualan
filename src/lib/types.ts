@@ -34,20 +34,3 @@ export interface UserProfile {
   profilePictureUrl?: string;
   role?: 'user' | 'superadmin';
 }
-
-export interface Chat {
-  id: string;
-  participantIds: string[];
-  lastMessage?: {
-    text: string;
-    senderId: string;
-    timestamp: FieldValue;
-  }
-}
-
-export interface ChatMessage {
-  id: string;
-  text: string;
-  senderId: string;
-  timestamp: FieldValue;
-}

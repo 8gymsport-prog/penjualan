@@ -95,59 +95,6 @@
         "paymentMethod",
         "totalAmount"
       ]
-    },
-    "Chat": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Chat",
-      "type": "object",
-      "description": "Represents a chat conversation between users.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the chat."
-        },
-        "participantIds": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "An array of user IDs participating in the chat."
-        },
-        "lastMessage": {
-          "type": "object",
-          "properties": {
-            "text": { "type": "string" },
-            "timestamp": { "type": "object" },
-            "senderId": { "type": "string" }
-          }
-        }
-      },
-      "required": ["id", "participantIds"]
-    },
-    "ChatMessage": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ChatMessage",
-      "type": "object",
-      "description": "Represents a single message within a chat.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the message."
-        },
-        "text": {
-          "type": "string",
-          "description": "The content of the message."
-        },
-        "senderId": {
-          "type": "string",
-          "description": "The ID of the user who sent the message."
-        },
-        "timestamp": {
-          "type": "object",
-          "description": "The server timestamp when the message was sent."
-        }
-      },
-      "required": ["id", "text", "senderId", "timestamp"]
     }
   },
   "auth": {
@@ -213,44 +160,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/chats/{chatId}",
-        "definition": {
-          "entityName": "Chat",
-          "schema": {
-            "$ref": "#/backend/entities/Chat"
-          },
-          "description": "Stores metadata for a chat conversation.",
-          "params": [
-            {
-              "name": "chatId",
-              "description": "The unique identifier for the chat."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/chats/{chatId}/messages/{messageId}",
-        "definition": {
-          "entityName": "ChatMessage",
-          "schema": {
-            "$ref": "#/backend/entities/ChatMessage"
-          },
-          "description": "Stores all messages for a specific chat.",
-          "params": [
-            {
-              "name": "chatId",
-              "description": "The unique identifier for the chat."
-            },
-            {
-              "name": "messageId",
-              "description": "The unique identifier for the message."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to securely manage user accounts, products, and transactions for the Kassa Kilat application. It emphasizes authorization independence through path-based ownership for user data and segregation of data based on access requirements. User accounts are stored under `/users/{userId}`. Products, owned by each user are stored under `/users/{userId}/products/{productId}` to keep data organized per user. Transactions, also owned by a user, are located at `/users/{userId}/transactions/{transactionId}`. This design eliminates the need for `get()` calls in security rules, thus enhancing security and efficiency, and supports atomic operations and straightforward security rules. Chat functionality is added with a top-level `/chats` collection. Each chat document contains participant IDs and has a sub-collection for messages, ensuring that chat data is efficiently queried and secured."
+    "reasoning": "The Firestore structure is designed to securely manage user accounts, products, and transactions for the Kassa Kilat application. It emphasizes authorization independence through path-based ownership for user data and segregation of data based on access requirements. User accounts are stored under `/users/{userId}`. Products, owned by each user are stored under `/users/{userId}/products/{productId}` to keep data organized per user. Transactions, also owned by a user, are located at `/users/{userId}/transactions/{transactionId}`. This design eliminates the need for `get()` calls in security rules, thus enhancing security and efficiency, and supports atomic operations and straightforward security rules."
   }
 }
