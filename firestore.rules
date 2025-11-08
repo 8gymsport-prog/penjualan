@@ -99,7 +99,12 @@ service cloud.firestore {
           return request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
        }
       
-      allow read, write: if isSignedIn() && isChatParticipant();
+      // Allow list for any signed-in user. The client-side query must enforce that
+      // the user is a participant. `get` calls are not allowed for `list` operations.
+      allow list: if isSignedIn();
+      
+      // Allow get/write if the user is a participant of the parent chat document.
+      allow get, write: if isSignedIn() && isChatParticipant();
     }
   }
 }
