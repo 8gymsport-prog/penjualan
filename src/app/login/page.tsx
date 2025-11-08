@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogIn, UserPlus, KeyRound, AtSign, User } from 'lucide-react';
 import KassaKilatIcon from '@/app/icon.svg';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -133,8 +134,15 @@ export default function LoginPage() {
             // The useEffect will now handle the redirection
         } catch(error: any) {
             let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-            if (error.message === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+             if (error.code === 'auth/invalid-credential' || error.message === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                 errorMessage = 'Email/Username atau password yang Anda masukkan salah.';
+            } else {
+                 const permissionError = new FirestorePermissionError({
+                    path: usersCol.path,
+                    operation: 'list',
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                errorMessage = 'Gagal mencari pengguna. Periksa aturan keamanan Anda.'
             }
              toast({
                 variant: 'destructive',
@@ -188,92 +196,91 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 font-body">
-        <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"><div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--background)),transparent)]"></div></div>
-      <Card className="w-full max-w-sm border-2 shadow-2xl shadow-primary/10">
-        <form onSubmit={handleSubmit}>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-              <Image
-                src={KassaKilatIcon}
-                alt="Ikon 店"
-                width={40}
-                height={40}
-                className="transition-transform duration-300 group-hover:scale-110"
-              />
-            </div>
-            <CardTitle className="text-3xl font-bold text-primary">
-              {isSignUp ? 'Buat Akun' : 'Selamat Datang'}
-            </CardTitle>
-            <CardDescription className="font-semibold text-muted-foreground">
-              {isSignUp
-                ? 'Mulai perjalanan Anda bersama kami.'
-                : 'Masuk untuk melanjutkan ke toko Anda.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-2">
-            {isSignUp && (
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background p-4 font-body">
+      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"><div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--background)),transparent)]"></div></div>
+      <main className="flex w-full flex-col items-center justify-center">
+        <Card className="w-full max-w-sm border-2 shadow-2xl shadow-primary/10">
+          <form onSubmit={handleSubmit}>
+            <CardHeader className="text-center">
+              <CardTitle className="text-3xl font-bold text-primary">
+                {isSignUp ? 'Buat Akun' : 'Selamat Datang'}
+              </CardTitle>
+              <CardDescription className="font-semibold text-muted-foreground">
+                {isSignUp
+                  ? 'Mulai perjalanan Anda bersama kami.'
+                  : 'Masuk untuk melanjutkan ke toko Anda.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-2">
+              {isSignUp && (
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="pl-10 font-semibold"
+                  />
+                </div>
+              )}
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                  id="username"
+                  id="email"
                   type="text"
-                  placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={isSignUp ? 'Email' : 'Email atau Username'}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
                   className="pl-10 font-semibold"
                 />
               </div>
-            )}
-            <div className="relative">
-              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                id="email"
-                type="text"
-                placeholder={isSignUp ? 'Email' : 'Email atau Username'}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                className="pl-10 font-semibold"
-              />
-            </div>
-            <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                className="pl-10 font-semibold"
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full font-bold" disabled={isLoading}>
-              {isLoading && <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
-              {isSignUp ? 'Daftar Sekarang' : 'Masuk'}
-            </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              {isSignUp ? 'Sudah punya akun?' : 'Belum punya akun?'}
-              <Button
-                type="button"
-                variant="link"
-                className="p-1 font-bold"
-                onClick={() => setIsSignUp(!isSignUp)}
-                disabled={isLoading}
-              >
-                {isSignUp ? 'Masuk di sini' : 'Daftar sekarang'}
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="pl-10 font-semibold"
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button type="submit" className="w-full font-bold" disabled={isLoading}>
+                {isLoading && <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+                {isSignUp ? 'Daftar Sekarang' : 'Masuk'}
               </Button>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+              <p className="text-center text-sm text-muted-foreground">
+                {isSignUp ? 'Sudah punya akun?' : 'Belum punya akun?'}
+                <Button
+                  type="button"
+                  variant="link"
+                  className="p-1 font-bold"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  disabled={isLoading}
+                >
+                  {isSignUp ? 'Masuk di sini' : 'Daftar sekarang'}
+                </Button>
+              </p>
+            </CardFooter>
+          </form>
+        </Card>
+      </main>
+      <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
+        Build with Love ❤️ by{' '}
+        <Link href="https://github.com/rakarmp" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline-offset-4 hover:underline">
+          Rakarmp
+        </Link>
+      </footer>
     </div>
   );
 }
