@@ -77,35 +77,48 @@ export const generateTxtReport = (transactions: Transaction[]): string => {
 };
 
 export const exportToPdf = (transactions: Transaction[], username: string) => {
-    const doc = new jsPDF() as jsPDFWithAutoTable;
+    const doc = new jsPDF({ orientation: "landscape" }) as jsPDFWithAutoTable;
     const now = new Date();
     const period = format(now, "d MMMM yyyy");
     const fileName = `Laporan_Penjualan_${username}_${format(now, "yyyyMMdd")}.pdf`;
 
     const tableHead = [
-      ["Waktu", "Produk", "Qty", "Harga", "Total", "Metode Pembayaran"]
+      ["No", "ID Transaksi", "Waktu", "Nama Produk", "Kuantitas", "Harga Satuan", "Total Penjualan", "Tunai", "QR", "Transfer"]
     ];
 
-    const tableBody = transactions.map(t => [
-        format(new Date(parseInt(t.timestamp)), 'HH:mm:ss'),
-        t.productName,
-        t.quantity,
-        formatCurrencyWithIDR(t.price),
-        formatCurrencyWithIDR(t.total),
-        t.payments.map(p => `${p.method} (${formatCurrencyWithIDR(p.amount)})`).join(', ')
-    ]);
-    
-    // Summary Calculation
-    const totalSales = transactions.reduce((sum, t) => sum + t.total, 0);
-    const totalTunai = transactions.flatMap(t => t.payments).filter(p => p.method === 'Tunai').reduce((sum, p) => sum + p.amount, 0);
-    const totalQR = transactions.flatMap(t => t.payments).filter(p => p.method === 'QR').reduce((sum, p) => sum + p.amount, 0);
-    const totalTransfer = transactions.flatMap(t => t.payments).filter(p => p.method === 'Transfer').reduce((sum, p) => sum + p.amount, 0);
+    let totalQuantity = 0;
+    let totalSales = 0;
+    let totalTunai = 0;
+    let totalQR = 0;
+    let totalTransfer = 0;
 
+    const tableBody = transactions.map((t, index) => {
+        const paymentTunai = t.payments.find(p => p.method === 'Tunai')?.amount || 0;
+        const paymentQR = t.payments.find(p => p.method === 'QR')?.amount || 0;
+        const paymentTransfer = t.payments.find(p => p.method === 'Transfer')?.amount || 0;
+
+        totalQuantity += t.quantity;
+        totalSales += t.total;
+        totalTunai += paymentTunai;
+        totalQR += paymentQR;
+        totalTransfer += paymentTransfer;
+
+        return [
+            index + 1,
+            t.id,
+            format(new Date(parseInt(t.timestamp)), 'yyyy-MM-dd HH:mm:ss'),
+            t.productName,
+            t.quantity,
+            formatCurrencyWithIDR(t.price),
+            formatCurrencyWithIDR(t.total),
+            formatCurrencyWithIDR(paymentTunai),
+            formatCurrencyWithIDR(paymentQR),
+            formatCurrencyWithIDR(paymentTransfer),
+        ];
+    });
+    
     const tableFoot = [
-        ["", "", "", "Total Penjualan", formatCurrencyWithIDR(totalSales), ""],
-        ["", "", "", "Total Tunai", formatCurrencyWithIDR(totalTunai), ""],
-        ["", "", "", "Total QR", formatCurrencyWithIDR(totalQR), ""],
-        ["", "", "", "Total Transfer", formatCurrencyWithIDR(totalTransfer), ""],
+        ["", "", "", "Total", totalQuantity, "", formatCurrencyWithIDR(totalSales), formatCurrencyWithIDR(totalTunai), formatCurrencyWithIDR(totalQR), formatCurrencyWithIDR(totalTransfer)]
     ];
 
     // Add Title
@@ -113,7 +126,7 @@ export const exportToPdf = (transactions: Transaction[], username: string) => {
     doc.text(`Laporan Penjualan - ${username}`, 14, 22);
     doc.setFontSize(11);
     doc.setTextColor(100);
-    doc.text(`Tanggal: ${period}`, 14, 29);
+    doc.text(`Periode: ${period}`, 14, 29);
 
     // Add Table
     doc.autoTable({
@@ -127,6 +140,7 @@ export const exportToPdf = (transactions: Transaction[], username: string) => {
         },
         footStyles: {
             fontStyle: 'bold',
+            fillColor: [244, 244, 245] // Muted color
         },
         didDrawPage: (data) => {
             // Add Footer
