@@ -102,8 +102,7 @@ export default function UserManagementPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Pengguna</TableHead>
-                            <TableHead>Email</TableHead>
+                            <TableHead className="w-[350px]">Pengguna</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Aksi</TableHead>
                         </TableRow>
@@ -118,10 +117,12 @@ export default function UserManagementPage() {
                                                 <AvatarImage src={u.profilePictureUrl} />
                                                 <AvatarFallback>{u.username.charAt(0).toUpperCase()}</AvatarFallback>
                                             </Avatar>
-                                            <span className="font-medium">{u.username}</span>
+                                            <div>
+                                                <div className="font-medium">{u.username}</div>
+                                                <div className="text-sm text-muted-foreground">{u.email}</div>
+                                            </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{u.email}</TableCell>
                                     <TableCell>
                                         <Badge variant={u.role === 'superadmin' ? 'default' : 'secondary'}>
                                             {u.role || 'user'}
@@ -134,7 +135,7 @@ export default function UserManagementPage() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={4} className="h-24 text-center">
+                                <TableCell colSpan={3} className="h-24 text-center">
                                     Tidak ada pengguna lain yang ditemukan.
                                 </TableCell>
                             </TableRow>
