@@ -145,6 +145,7 @@ export default function SettingsPage() {
         userDocRef,
         {
           username: username,
+          email: auth.currentUser.email, // Make sure email is saved
           profilePictureUrl: photo,
           role: userRole,
         },
@@ -206,8 +207,13 @@ export default function SettingsPage() {
 
   if (isUserLoading || isProfileLoading || !user) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+       <div className="flex flex-col min-h-screen w-full">
+        <Header />
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+          <div className="flex h-screen w-full items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        </main>
       </div>
     );
   }

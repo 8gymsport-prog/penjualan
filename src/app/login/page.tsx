@@ -21,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, UserPlus, KeyRound, AtSign, User } from 'lucide-react';
-import KassaKilatIcon from '@/app/icon.svg';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -77,11 +76,12 @@ export default function LoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const newUser = userCredential.user;
         
-        // Save user profile with username
+        // Save user profile with username and email
         await setDoc(doc(firestore, 'users', newUser.uid), {
           id: newUser.uid,
           username: username,
           email: newUser.email,
+          role: 'user', // Default role
         });
 
         toast({
