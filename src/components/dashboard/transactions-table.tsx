@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Transaction } from "@/lib/types";
-import { Trash2, FileText, FileSpreadsheet } from "lucide-react";
+import { Trash2, FileText, FileType } from "lucide-react";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { ReportPreviewDialog } from "./report-preview-dialog";
 import { Badge } from "@/components/ui/badge";
-import { exportToExcel } from "@/lib/reports";
+import { exportToPdf } from "@/lib/reports";
 import { useUser, useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from 'firebase/firestore';
 
@@ -81,7 +81,7 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
   
   const handleExport = () => {
     const username = userProfile?.username || user?.displayName || "Pengguna";
-    exportToExcel(transactions, username);
+    exportToPdf(transactions, username);
   }
 
   return (
@@ -99,8 +99,8 @@ export function TransactionsTable({ transactions, clearTransactions, deleteTrans
                     Preview Laporan
                  </Button>
                  <Button variant="outline" size="sm" onClick={handleExport} disabled={transactions.length === 0}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Ekspor ke Excel
+                    <FileType className="mr-2 h-4 w-4" />
+                    Ekspor ke PDF
                  </Button>
                  <AlertDialog open={isClearAlertOpen} onOpenChange={setIsClearAlertOpen}>
                   <AlertDialogTrigger asChild>

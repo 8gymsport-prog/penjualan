@@ -1,6 +1,12 @@
 import type { Transaction } from "./types";
 import { format } from "date-fns";
-import * as XLSX from 'xlsx';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
+// Extend jsPDF with the autoTable plugin
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+}
 
 const formatCurrency = (amount: number) => {
   // Use a simpler format like 45k
@@ -70,89 +76,65 @@ export const generateTxtReport = (transactions: Transaction[]): string => {
   return content;
 };
 
-export const exportToExcel = (transactions: Transaction[], username: string) => {
+export const exportToPdf = (transactions: Transaction[], username: string) => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
     const now = new Date();
-    const period = format(now, "MMMM yyyy");
-    const fileName = `Laporan_Penjualan_${username}_${format(now, "yyyyMMdd")}.xlsx`;
+    const period = format(now, "d MMMM yyyy");
+    const fileName = `Laporan_Penjualan_${username}_${format(now, "yyyyMMdd")}.pdf`;
 
-    const dataForExcel = transactions.map((t, index) => {
-        const paymentDetails = {
-            Tunai: 0,
-            QR: 0,
-            Transfer: 0
-        };
+    const tableHead = [
+      ["Waktu", "Produk", "Qty", "Harga", "Total", "Metode Pembayaran"]
+    ];
 
-        if (Array.isArray(t.payments)) {
-            t.payments.forEach(p => {
-                if (p.method in paymentDetails) {
-                    paymentDetails[p.method as keyof typeof paymentDetails] += p.amount;
-                }
-            });
+    const tableBody = transactions.map(t => [
+        format(new Date(parseInt(t.timestamp)), 'HH:mm:ss'),
+        t.productName,
+        t.quantity,
+        formatCurrencyWithIDR(t.price),
+        formatCurrencyWithIDR(t.total),
+        t.payments.map(p => `${p.method} (${formatCurrencyWithIDR(p.amount)})`).join(', ')
+    ]);
+    
+    // Summary Calculation
+    const totalSales = transactions.reduce((sum, t) => sum + t.total, 0);
+    const totalTunai = transactions.flatMap(t => t.payments).filter(p => p.method === 'Tunai').reduce((sum, p) => sum + p.amount, 0);
+    const totalQR = transactions.flatMap(t => t.payments).filter(p => p.method === 'QR').reduce((sum, p) => sum + p.amount, 0);
+    const totalTransfer = transactions.flatMap(t => t.payments).filter(p => p.method === 'Transfer').reduce((sum, p) => sum + p.amount, 0);
+
+    const tableFoot = [
+        ["", "", "", "Total Penjualan", formatCurrencyWithIDR(totalSales), ""],
+        ["", "", "", "Total Tunai", formatCurrencyWithIDR(totalTunai), ""],
+        ["", "", "", "Total QR", formatCurrencyWithIDR(totalQR), ""],
+        ["", "", "", "Total Transfer", formatCurrencyWithIDR(totalTransfer), ""],
+    ];
+
+    // Add Title
+    doc.setFontSize(18);
+    doc.text(`Laporan Penjualan - ${username}`, 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Tanggal: ${period}`, 14, 29);
+
+    // Add Table
+    doc.autoTable({
+        startY: 35,
+        head: tableHead,
+        body: tableBody,
+        foot: tableFoot,
+        theme: 'striped',
+        headStyles: {
+            fillColor: [37, 99, 235] // Primary color (blue-600)
+        },
+        footStyles: {
+            fontStyle: 'bold',
+        },
+        didDrawPage: (data) => {
+            // Add Footer
+            const pageCount = doc.internal.pages.length;
+            doc.setFontSize(10);
+            doc.text(`Halaman ${data.pageNumber} dari ${pageCount - 1}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
         }
-        
-        return {
-            "No": index + 1,
-            "ID Transaksi": t.id,
-            "Waktu": format(new Date(parseInt(t.timestamp)), 'yyyy-MM-dd HH:mm:ss'),
-            "Nama Produk": t.productName,
-            "Kuantitas": t.quantity,
-            "Harga Satuan": t.price,
-            "Total Penjualan": t.total,
-            "Tunai": paymentDetails.Tunai,
-            "QR": paymentDetails.QR,
-            "Transfer": paymentDetails.Transfer,
-        };
     });
 
-    const totalPenjualan = dataForExcel.reduce((sum, item) => sum + item['Total Penjualan'], 0);
-    const totalTunai = dataForExcel.reduce((sum, item) => sum + item['Tunai'], 0);
-    const totalQR = dataForExcel.reduce((sum, item) => sum + item['QR'], 0);
-    const totalTransfer = dataForExcel.reduce((sum, item) => sum + item['Transfer'], 0);
-    const totalKuantitas = dataForExcel.reduce((sum, item) => sum + item['Kuantitas'], 0);
-
-    const ws = XLSX.utils.json_to_sheet([]);
-
-    XLSX.utils.sheet_add_aoa(ws, [
-        [`Laporan Penjualan - ${username}`],
-        [`Periode: ${period}`]
-    ], { origin: "A1" });
-
-    XLSX.utils.sheet_add_json(ws, dataForExcel, { origin: "A4", skipHeader: false });
-    
-    // Add total row at the end
-    const totalRow = [
-        "", // No
-        "", // ID
-        "", // Waktu
-        "Total", // Nama Produk
-        totalKuantitas, // Kuantitas
-        "", // Harga Satuan
-        totalPenjualan, // Total Penjualan
-        totalTunai, // Tunai
-        totalQR, // QR
-        totalTransfer // Transfer
-    ];
-    XLSX.utils.sheet_add_aoa(ws, [totalRow], { origin: -1 });
-
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 9 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 9 } },
-    ];
-
-    ws['!cols'] = [
-        { wch: 5 },   // No
-        { wch: 38 },  // ID
-        { wch: 20 },  // Waktu
-        { wch: 25 },  // Nama Produk
-        { wch: 10 },  // Kuantitas
-        { wch: 15 },  // Harga Satuan
-        { wch: 15 },  // Total Penjualan
-        { wch: 15 },  // Tunai
-        { wch: 15 },  // QR
-        { wch: 15 },  // Transfer
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Penjualan");
-    XLSX.writeFile(wb, fileName);
+    doc.save(fileName);
 };
