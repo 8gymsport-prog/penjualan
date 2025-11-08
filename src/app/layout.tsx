@@ -1,14 +1,26 @@
+'use client';
+
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
-import { FirebaseClientProvider } from "@/firebase";
+import { FirebaseClientProvider, useUser } from "@/firebase";
 import { ThemeProvider } from "@/components/theme-provider";
 import Image from "next/image";
+import { ChatWidget } from "@/components/chat/chat-widget";
 
-export const metadata: Metadata = {
-  title: "店",
-  description: "Aplikasi kasir untuk mencatat penjualan dan membuat laporan.",
-};
+// Metadata tidak bisa diekspor dari Client Component, jadi kita hapus.
+// Jika diperlukan, bisa dipindahkan ke file page.tsx terpisah.
+
+function AppContent({ children }: { children: React.ReactNode }) {
+  const { user } = useUser();
+  return (
+    <>
+      {children}
+      {user && <ChatWidget />}
+    </>
+  );
+}
+
 
 export default function RootLayout({
   children,
@@ -18,6 +30,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <title>店</title>
+        <meta name="description" content="Aplikasi kasir untuk mencatat penjualan dan membuat laporan." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -41,7 +55,7 @@ export default function RootLayout({
             <div className="absolute inset-0 bg-background/30 dark:bg-background/70 backdrop-blur-[2px]"></div>
           </div>
           <FirebaseClientProvider>
-            {children}
+            <AppContent>{children}</AppContent>
             <Toaster />
           </FirebaseClientProvider>
         </ThemeProvider>

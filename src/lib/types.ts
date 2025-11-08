@@ -1,3 +1,5 @@
+import { FieldValue } from 'firebase/firestore';
+
 export type PaymentMethod = "Tunai" | "QR" | "Transfer";
 
 export interface Payment {
@@ -25,12 +27,27 @@ export interface Product {
     userId: string;
 }
 
+export interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  profilePictureUrl?: string;
+  role?: 'user' | 'superadmin';
+}
 
-// This User type is now simplified as Firebase's User type will be the primary source of truth.
-// You can extend this or use Firebase's `User` type from 'firebase/auth' directly in your components.
-export interface User {
-  uid: string;
-  email?: string | null;
-  displayName?: string | null;
-  photoURL?: string | null;
+export interface Chat {
+  id: string;
+  participantIds: string[];
+  lastMessage?: {
+    text: string;
+    senderId: string;
+    timestamp: FieldValue;
+  }
+}
+
+export interface ChatMessage {
+  id: string;
+  text: string;
+  senderId: string;
+  timestamp: FieldValue;
 }
