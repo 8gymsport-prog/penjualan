@@ -31,12 +31,12 @@ export default function RootLayout({
         >
           <div className="fixed inset-0 -z-20">
             <Image
-              src="https://images.unsplash.com/photo-1534088568595-a066f410bcda?q=80&w=1951&auto=format&fit=crop"
-              alt="Bright sky background"
+              src="https://i.imgur.com/DxsgIqs.jpeg"
+              alt="Misty mountain landscape"
               fill
               style={{ objectFit: 'cover' }}
               priority
-              data-ai-hint="bright sky"
+              data-ai-hint="misty mountain"
             />
             <div className="absolute inset-0 bg-background/30 dark:bg-background/70 backdrop-blur-[2px]"></div>
           </div>
