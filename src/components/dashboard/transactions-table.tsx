@@ -108,10 +108,10 @@ export function TransactionsTable({ transactions, products, clearTransactions, d
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <CardTitle className="font-headline text-lg">Riwayat Transaksi Hari Ini</CardTitle>
+                <CardTitle className="font-headline text-xl">Riwayat Transaksi Hari Ini</CardTitle>
                 <CardDescription>Daftar semua penjualan yang tercatat hari ini.</CardDescription>
             </div>
-            <div className="mt-4 sm:mt-0 flex items-center gap-2">
+            <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-2">
                  <Button variant="outline" size="sm" onClick={() => setIsPreviewOpen(true)} disabled={transactions.length === 0}>
                     <FileText className="mr-2 h-4 w-4" />
                     Preview Laporan
@@ -160,11 +160,11 @@ export function TransactionsTable({ transactions, products, clearTransactions, d
               transactions.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.productName} <span className="text-muted-foreground">x{t.quantity}</span></TableCell>
-                  <TableCell className="text-right">{formatCurrency(t.total)}</TableCell>
+                  <TableCell className="text-right font-semibold">{formatCurrency(t.total)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {Array.isArray(t.payments) ? t.payments.map((p, index) => (
-                        <Badge key={index} variant="secondary">{p.method}: {formatCurrency(p.amount)}</Badge>
+                        <Badge key={index} variant="secondary">{p.method}</Badge>
                       )) : (
                         <Badge variant="secondary">Tidak diketahui</Badge>
                       )}
@@ -173,11 +173,11 @@ export function TransactionsTable({ transactions, products, clearTransactions, d
                   <TableCell>{format(new Date(parseInt(t.timestamp)), 'HH:mm:ss')}</TableCell>
                   <TableCell className="text-right space-x-1">
                      <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(t)}>
-                        <Edit className="h-4 w-4 text-muted-foreground" />
+                        <Edit className="h-4 w-4 text-muted-foreground hover:text-primary" />
                         <span className="sr-only">Edit</span>
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => openDeleteConfirm(t.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                         <span className="sr-only">Hapus</span>
                     </Button>
                   </TableCell>

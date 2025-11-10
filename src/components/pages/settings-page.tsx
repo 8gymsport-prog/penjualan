@@ -265,20 +265,21 @@ export default function SettingsPage() {
     <div className="flex min-h-screen w-full flex-col">
       <Header />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <h2 className="text-2xl font-bold font-headline tracking-tight">
-          Pengaturan Akun
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">
+          Pengaturan
         </h2>
-        <div className="grid gap-6">
-          <Card>
+        <div className="grid gap-8">
+          <Card className="transparent-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserIcon /> Edit Profil
+              <CardTitle className="flex items-center gap-3">
+                <UserIcon className="text-primary" />
+                <span>Edit Profil</span>
               </CardTitle>
               <CardDescription>
                 Perbarui username dan foto profil Anda.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
                 <Input
@@ -291,9 +292,9 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label>Foto Profil</Label>
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
+                  <Avatar className="h-20 w-20 border-2 border-primary/50">
                     <AvatarImage src={photo} />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-secondary text-lg">
                       {username?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -317,26 +318,31 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-              <Button onClick={handleUpdateProfile} disabled={isUpdating}>
-                {isUpdating ? 'Menyimpan...' : 'Simpan Profil'}
-              </Button>
             </CardContent>
+             <CardFooter>
+                 <Button onClick={handleUpdateProfile} disabled={isUpdating}>
+                    {isUpdating ? 'Menyimpan...' : 'Simpan Perubahan Profil'}
+                </Button>
+            </CardFooter>
           </Card>
           
-          <Card>
+          <Card className="transparent-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Tampilan
+               <CardTitle className="flex items-center gap-3">
+                {theme === 'dark' ? <Moon className="text-purple-400"/> : <Sun className="text-yellow-400"/>}
+                <span>Tampilan</span>
               </CardTitle>
               <CardDescription>
                 Sesuaikan tampilan aplikasi sesuai preferensi Anda.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="dark-mode" className="flex items-center gap-2">
-                  {theme === 'dark' ? <Moon /> : <Sun />}
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <Label htmlFor="dark-mode" className="flex flex-col gap-1">
                   <span>Mode Gelap</span>
+                  <span className="font-normal text-muted-foreground">
+                    Nikmati skema warna yang lebih teduh.
+                  </span>
                 </Label>
                 <Switch
                   id="dark-mode"
@@ -348,10 +354,11 @@ export default function SettingsPage() {
           </Card>
 
 
-          <Card>
+          <Card className="transparent-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock /> Ubah Password
+               <CardTitle className="flex items-center gap-3">
+                <Lock className="text-accent"/>
+                <span>Ubah Password</span>
               </CardTitle>
               <CardDescription>
                 Ubah password masuk Anda secara berkala untuk keamanan.
@@ -366,6 +373,7 @@ export default function SettingsPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   disabled={isUpdating}
+                  placeholder="Minimal 6 karakter"
                 />
               </div>
               <div className="space-y-2">
@@ -378,31 +386,34 @@ export default function SettingsPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isUpdating}
+                  placeholder="Ketik ulang password baru Anda"
                 />
               </div>
-              <Button onClick={handleUpdatePassword} disabled={isUpdating}>
-                {isUpdating ? 'Menyimpan...' : 'Simpan Password'}
-              </Button>
             </CardContent>
+             <CardFooter>
+                <Button onClick={handleUpdatePassword} disabled={isUpdating}>
+                    {isUpdating ? 'Menyimpan...' : 'Simpan Password Baru'}
+                </Button>
+            </CardFooter>
           </Card>
           
-           <Card className="border-destructive">
+           <Card className="border-destructive/50 bg-destructive/5">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
+              <CardTitle className="flex items-center gap-3 text-destructive">
                 <ShieldX /> Zona Berbahaya
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-destructive/80">
                 Tindakan di bawah ini bersifat permanen dan tidak dapat diurungkan.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex items-center justify-between">
+            <CardContent className="flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 p-4">
                 <div>
-                    <p className="font-semibold">Hapus Akun Anda</p>
-                    <p className="text-sm text-muted-foreground">Semua data Anda akan dihapus secara permanen.</p>
+                    <p className="font-semibold text-destructive">Hapus Akun Anda</p>
+                    <p className="text-sm text-destructive/70">Semua data Anda akan dihapus secara permanen.</p>
                 </div>
                 <Button variant="destructive" onClick={() => setIsDeleteAlertOpen(true)} disabled={isUpdating}>
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Hapus Akun
+                    Hapus Akun Saya
                 </Button>
             </CardContent>
           </Card>
@@ -415,7 +426,7 @@ export default function SettingsPage() {
           <DialogHeader>
             <DialogTitle>Potong Gambar</DialogTitle>
           </DialogHeader>
-          <div className="flex justify-center">
+          <div className="flex justify-center p-4 bg-muted/50 rounded-lg">
             {src && (
               <ReactCrop
                 crop={crop}
@@ -465,7 +476,6 @@ export default function SettingsPage() {
         <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
-             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
              onClick={handleDeleteAccount}>
              Ya, Hapus Akun Saya
             </AlertDialogAction>

@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { Transaction, Product, Payment, PaymentMethod } from "@/lib/types";
 import { PlusCircle, Plus, Minus, ChevronsUpDown } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
@@ -111,13 +111,14 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
     <>
     <Card className="transparent-card">
       <CardHeader>
-        <CardTitle className="font-headline text-lg">Tambah Transaksi Baru</CardTitle>
+        <CardTitle className="font-headline text-xl">Tambah Transaksi Baru</CardTitle>
+        <CardDescription>Pilih produk dan masukkan detail pembayaran.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Product and Quantity */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 items-end">
               <FormField
                 control={form.control}
                 name="productId"
@@ -132,7 +133,9 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
                         onClick={() => setIsProductDialogOpen(true)}
                         disabled={products.length === 0}
                       >
-                        {selectedProduct?.name ?? (products.length === 0 ? "Belum ada produk" : "Pilih produk...")}
+                        <span className="truncate">
+                            {selectedProduct?.name ?? (products.length === 0 ? "Belum ada produk" : "Pilih produk...")}
+                        </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>
@@ -147,7 +150,7 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
                   <FormItem>
                     <FormLabel>Harga Satuan</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} readOnly className="bg-muted"/>
+                      <Input type="number" {...field} readOnly className="bg-muted/50 focus-visible:ring-0 focus-visible:ring-offset-0"/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -227,16 +230,16 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
             </div>
              
              {/* Summary */}
-            <div className="rounded-md border bg-muted/50 p-4 space-y-2">
+            <div className="rounded-lg border bg-secondary/50 p-4 space-y-2">
                 <div className="flex justify-between font-medium">
                     <span>Total Tagihan:</span>
                     <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(totalDue)}</span>
                 </div>
-                 <div className="flex justify-between">
+                 <div className="flex justify-between text-muted-foreground">
                     <span>Total Dibayar:</span>
                     <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(totalPaid)}</span>
                 </div>
-                 <div className={cn("flex justify-between font-semibold", remainingAmount !== 0 ? "text-destructive" : "text-primary")}>
+                 <div className={cn("flex justify-between font-semibold", remainingAmount !== 0 ? "text-destructive" : "text-accent")}>
                     <span>Sisa:</span>
                     <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(remainingAmount)}</span>
                 </div>

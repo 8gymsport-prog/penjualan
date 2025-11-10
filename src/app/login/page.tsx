@@ -21,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, UserPlus, KeyRound, AtSign, User } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -185,8 +184,6 @@ export default function LoginPage() {
     }
   };
   
-  // Don't render the login form if we are still checking the user's auth state
-  // or if the user is already logged in (and the redirect is in progress).
   if (isUserLoading || user) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -196,25 +193,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background p-4 font-body">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]"><div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,hsl(var(--background)),transparent)]"></div></div>
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background p-4 font-body">
+      <div className="absolute inset-0 -z-10 h-full w-full bg-gradient-to-tr from-background via-secondary to-background">
+        <div className="absolute left-1/2 top-0 -z-10 h-3/5 w-4/5 -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,hsl(var(--accent)/0.3),transparent)] blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 -z-10 h-2/5 w-2/5 rounded-full bg-[radial-gradient(closest-side,hsl(var(--primary)/0.2),transparent)] blur-3xl"></div>
+        <div className="absolute bottom-0 right-0 -z-10 h-2/5 w-2/5 translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(closest-side,hsl(260_80%_70%/0.2),transparent)] blur-3xl"></div>
+      </div>
       <main className="flex w-full flex-col items-center justify-center">
-        <Card className="w-full max-w-sm border-2 shadow-2xl shadow-primary/10">
+        <Card className="w-full max-w-sm border-border/50 bg-card/80 shadow-2xl shadow-primary/10 backdrop-blur-lg">
           <form onSubmit={handleSubmit}>
             <CardHeader className="text-center">
-              <CardTitle className="text-3xl font-bold text-primary">
-                {isSignUp ? 'Buat Akun' : 'Selamat Datang'}
+                <h1 className="mb-2 text-4xl font-bold text-primary">店</h1>
+              <CardTitle className="text-2xl font-bold">
+                {isSignUp ? 'Buat Akun Baru' : 'Selamat Datang Kembali'}
               </CardTitle>
-              <CardDescription className="font-semibold text-muted-foreground">
+              <CardDescription className="text-muted-foreground">
                 {isSignUp
-                  ? 'Mulai perjalanan Anda bersama kami.'
-                  : 'Masuk untuk melanjutkan ke toko Anda.'}
+                  ? 'Isi form di bawah untuk mendaftar.'
+                  : 'Masuk untuk melanjutkan ke kasir Anda.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 pt-2">
               {isSignUp && (
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
                   <Input
                     id="username"
                     type="text"
@@ -223,12 +225,12 @@ export default function LoginPage() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="pl-10 font-semibold"
+                    className="pl-12"
                   />
                 </div>
               )}
               <div className="relative">
-                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
                 <Input
                   id="email"
                   type="text"
@@ -237,11 +239,11 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="pl-10 font-semibold"
+                  className="pl-12"
                 />
               </div>
               <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
                 <Input
                   id="password"
                   type="password"
@@ -250,14 +252,14 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
-                  className="pl-10 font-semibold"
+                  className="pl-12"
                 />
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full font-bold" disabled={isLoading}>
                 {isLoading && <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
-                {isSignUp ? 'Daftar Sekarang' : 'Masuk'}
+                {isSignUp ? 'Daftar' : 'Masuk'}
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 {isSignUp ? 'Sudah punya akun?' : 'Belum punya akun?'}
@@ -275,9 +277,9 @@ export default function LoginPage() {
           </form>
         </Card>
       </main>
-      <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
+       <footer className="absolute bottom-4 text-center text-sm text-muted-foreground/50">
         Build with Love ❤️ by{' '}
-        <Link href="https://github.com/rakarmp" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline-offset-4 hover:underline">
+        <Link href="https://github.com/rakarmp" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary/80 underline-offset-4 hover:underline hover:text-primary">
           Rakarmp
         </Link>
       </footer>

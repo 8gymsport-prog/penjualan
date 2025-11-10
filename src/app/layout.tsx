@@ -37,20 +37,12 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
-          <div className="fixed inset-0 -z-20">
-            <Image
-              src="https://i.imgur.com/DxsgIqs.jpeg"
-              alt="Misty mountain landscape"
-              fill
-              style={{ objectFit: 'cover' }}
-              priority
-              data-ai-hint="misty mountain"
-            />
-            <div className="absolute inset-0 bg-background/30 dark:bg-background/70 backdrop-blur-[2px]"></div>
+          <div className="fixed inset-0 -z-20 h-full w-full bg-background">
+             <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,hsl(var(--primary)/0.3),rgba(255,255,255,0))]"></div>
           </div>
           <FirebaseClientProvider>
             <AppContent>{children}</AppContent>

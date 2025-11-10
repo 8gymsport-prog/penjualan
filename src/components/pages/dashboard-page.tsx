@@ -94,7 +94,7 @@ export default function DashboardPage() {
       total: totalAmount,
     };
     
-    setTransactions(prevTransactions => [...prevTransactions, newTransaction]);
+    setTransactions(prevTransactions => [newTransaction, ...prevTransactions]);
     
     toast({
       title: 'Transaksi Ditambahkan',
@@ -153,19 +153,18 @@ export default function DashboardPage() {
         <div className="relative z-10 flex flex-col min-h-screen w-full">
           <Header />
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-            <Skeleton className="h-8 w-64 bg-slate-200/80" />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Skeleton className="h-28 bg-slate-200/80" />
-              <Skeleton className="h-28 bg-slate-200/80" />
-              <Skeleton className="h-28 bg-slate-200/80" />
-              <Skeleton className="h-28 bg-slate-200/80" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
             </div>
             <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
               <div className="xl:col-span-3">
-                <Skeleton className="h-60 bg-slate-200/80" />
+                <Skeleton className="h-80" />
               </div>
               <div className="xl:col-span-3">
-                <Skeleton className="h-80 bg-slate-200/80" />
+                <Skeleton className="h-96" />
               </div>
             </div>
           </main>
@@ -191,7 +190,7 @@ export default function DashboardPage() {
               </div>
               <div className="xl:col-span-3">
                 <TransactionsTable
-                  transactions={transactions}
+                  transactions={transactions.sort((a,b) => parseInt(b.timestamp) - parseInt(a.timestamp))}
                   products={products || []}
                   updateTransaction={updateTransaction}
                   clearTransactions={clearTransactions}

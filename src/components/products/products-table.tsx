@@ -87,11 +87,11 @@ export function ProductsTable({ products, onAddProduct, onUpdateProduct, onDelet
 
   return (
     <>
-      <Card>
+      <Card className="transparent-card">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div>
-                  <CardTitle className="font-headline text-lg">Kelola Produk</CardTitle>
+                  <CardTitle className="font-headline text-xl">Kelola Produk</CardTitle>
                   <CardDescription>Tambah, edit, atau hapus produk Anda.</CardDescription>
               </div>
               <div className="mt-4 sm:mt-0">
@@ -117,7 +117,7 @@ export function ProductsTable({ products, onAddProduct, onUpdateProduct, onDelet
                 products.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(p.price)}</TableCell>
+                    <TableCell className="text-right font-semibold">{formatCurrency(p.price)}</TableCell>
                     <TableCell className="text-right">
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>

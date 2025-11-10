@@ -2,8 +2,6 @@
 
 import { LogOut, Settings, Package, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
-import KassaKilatIcon from '@/app/icon.svg';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Skeleton } from './ui/skeleton';
@@ -45,28 +43,28 @@ export function Header() {
   const isSuperAdmin = userProfile?.role === 'superadmin';
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card/80 px-4 backdrop-blur-sm sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 bg-card/80 px-4 backdrop-blur-lg sm:px-6">
       <Link href="/" className="flex items-center gap-2">
-        <h1 className="hidden text-xl font-semibold font-headline text-primary sm:block">
+        <h1 className="text-xl font-semibold font-headline text-primary">
           店
         </h1>
       </Link>
-      <div className="ml-auto flex items-center gap-2 sm:gap-4">
+      <div className="ml-auto flex items-center gap-1 sm:gap-2">
         {isUserLoading || isProfileLoading ? (
           <div className="flex items-center gap-2">
             <Skeleton className="h-8 w-8 rounded-full" />
             <Skeleton className="hidden h-4 w-20 sm:inline" />
           </div>
         ) : user ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 rounded-full p-1 pr-3 hover:bg-secondary">
             <Avatar className="h-8 w-8">
               <AvatarImage src={photoURL ?? undefined} alt={displayName} />
               <AvatarFallback>
                 {displayName?.charAt(0).toUpperCase() ?? 'U'}
               </AvatarFallback>
             </Avatar>
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              Halo, {displayName}
+            <span className="hidden text-sm font-medium text-foreground sm:inline">
+              {displayName}
             </span>
           </div>
         ) : null}
@@ -92,6 +90,7 @@ export function Header() {
           size="icon"
           onClick={handleLogout}
           aria-label="Logout"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-5 w-5" />
         </Button>

@@ -48,10 +48,10 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
       <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Penjualan</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <DollarSign className="h-5 w-5 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold font-headline text-primary">
+          <div className="text-3xl font-bold text-primary">
             {formatCurrency(summary.totalSales)}
           </div>
           <p className="text-xs text-muted-foreground">Total pendapatan hari ini</p>
@@ -60,10 +60,10 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
       <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tunai</CardTitle>
-          <Wallet className="h-4 w-4 text-muted-foreground" />
+          <Wallet className="h-5 w-5 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold font-headline text-primary">
+          <div className="text-3xl font-bold">
             {formatCurrency(summary.tunai)}
           </div>
           <p className="text-xs text-muted-foreground">Total pembayaran tunai</p>
@@ -72,10 +72,10 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
       <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">QR Code</CardTitle>
-          <QrCode className="h-4 w-4 text-muted-foreground" />
+          <QrCode className="h-5 w-5 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold font-headline text-primary">
+          <div className="text-3xl font-bold">
             {formatCurrency(summary.qr)}
           </div>
            <p className="text-xs text-muted-foreground">Total pembayaran QR</p>
@@ -84,10 +84,10 @@ export function SalesOverview({ transactions }: SalesOverviewProps) {
       <Card className="transparent-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Transfer</CardTitle>
-          <Landmark className="h-4 w-4 text-muted-foreground" />
+          <Landmark className="h-5 w-5 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold font-headline text-primary">
+          <div className="text-3xl font-bold">
             {formatCurrency(summary.transfer)}
           </div>
           <p className="text-xs text-muted-foreground">Total pembayaran transfer</p>
