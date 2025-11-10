@@ -122,7 +122,7 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
                 control={form.control}
                 name="productId"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem>
                     <FormLabel>Nama Produk</FormLabel>
                     <FormControl>
                        <Button

@@ -129,17 +129,19 @@ export function EditTransactionDialog({ isOpen, onClose, transaction, products: 
                 control={form.control}
                 name="productId"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem>
                     <FormLabel>Produk</FormLabel>
-                     <Button
-                        variant="outline"
-                        type="button"
-                        className="w-full justify-between font-normal"
-                        onClick={() => setIsProductDialogOpen(true)}
-                      >
-                        {selectedProduct?.name ?? "Pilih produk..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
+                     <FormControl>
+                        <Button
+                            variant="outline"
+                            type="button"
+                            className="w-full justify-between font-normal"
+                            onClick={() => setIsProductDialogOpen(true)}
+                        >
+                            {selectedProduct?.name ?? "Pilih produk..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
