@@ -22,10 +22,10 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Transaction, Product, Payment, PaymentMethod } from "@/lib/types";
-import { PlusCircle, Trash2, Plus, Minus } from "lucide-react";
+import { PlusCircle, Plus, Minus, ChevronsUpDown } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Combobox } from "@/components/ui/combobox";
+import { ProductSelectionDialog } from "@/components/products/product-selection-dialog";
 
 const paymentSchema = z.object({
   method: z.enum(["Tunai", "QR", "Transfer"]),
@@ -57,6 +57,7 @@ interface TransactionFormProps {
 }
 
 export function TransactionForm({ addTransaction, isProcessing, products }: TransactionFormProps) {
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,10 +73,6 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
     name: "payments",
   });
 
-  const productOptions = useMemo(() => {
-    return products.map(p => ({ label: p.name, value: p.id }));
-  }, [products]);
-
   const selectedProductId = form.watch("productId");
   const quantity = form.watch("quantity");
   const payments = form.watch("payments");
@@ -83,8 +80,9 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
   const totalPaid = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
   const remainingAmount = totalDue - totalPaid;
 
+  const selectedProduct = products.find(p => p.id === selectedProductId);
+
   useEffect(() => {
-    const selectedProduct = products.find(p => p.id === selectedProductId);
     if (selectedProduct) {
       form.setValue("price", selectedProduct.price);
       const newTotal = selectedProduct.price * quantity;
@@ -95,7 +93,7 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
     } else {
         form.setValue("price", 0);
     }
-  }, [selectedProductId, quantity, products, form]);
+  }, [selectedProductId, quantity, products, form, selectedProduct]);
 
 
   function onSubmit(values: FormValues) {
@@ -104,7 +102,13 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
     form.reset();
   }
 
+  const handleProductSelect = (productId: string) => {
+    form.setValue("productId", productId);
+    setIsProductDialogOpen(false);
+  }
+
   return (
+    <>
     <Card className="transparent-card">
       <CardHeader>
         <CardTitle className="font-headline text-lg">Tambah Transaksi Baru</CardTitle>
@@ -120,15 +124,18 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Nama Produk</FormLabel>
-                    <Combobox
-                        options={productOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder={products.length === 0 ? "Belum ada produk" : "Pilih atau cari produk..."}
-                        searchPlaceholder="Cari produk..."
-                        emptyPlaceholder="Produk tidak ditemukan."
+                    <FormControl>
+                       <Button
+                        variant="outline"
+                        type="button"
+                        className="w-full justify-between font-normal"
+                        onClick={() => setIsProductDialogOpen(true)}
                         disabled={products.length === 0}
-                    />
+                      >
+                        {selectedProduct?.name ?? (products.length === 0 ? "Belum ada produk" : "Pilih produk...")}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -243,5 +250,12 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
         </Form>
       </CardContent>
     </Card>
+    <ProductSelectionDialog
+        isOpen={isProductDialogOpen}
+        onClose={() => setIsProductDialogOpen(false)}
+        products={products}
+        onSelect={handleProductSelect}
+      />
+    </>
   );
 }

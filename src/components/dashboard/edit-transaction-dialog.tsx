@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
@@ -30,9 +30,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Transaction, Product } from "@/lib/types";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Combobox } from "@/components/ui/combobox";
+import { ProductSelectionDialog } from "@/components/products/product-selection-dialog";
 
 const paymentSchema = z.object({
   method: z.enum(["Tunai", "QR", "Transfer"]),
@@ -69,6 +69,7 @@ let products: Product[] = [];
 
 export function EditTransactionDialog({ isOpen, onClose, transaction, products: passedProducts, onSave }: EditTransactionDialogProps) {
   products = passedProducts; // Update products in the scope
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -78,10 +79,6 @@ export function EditTransactionDialog({ isOpen, onClose, transaction, products: 
       payments: transaction.payments,
     },
   });
-  
-  const productOptions = useMemo(() => {
-    return passedProducts.map(p => ({ label: p.name, value: p.id }));
-  }, [passedProducts]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -110,7 +107,13 @@ export function EditTransactionDialog({ isOpen, onClose, transaction, products: 
     onSave(updatedTransaction);
   }
 
+  const handleProductSelect = (productId: string) => {
+    form.setValue("productId", productId);
+    setIsProductDialogOpen(false);
+  }
+
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -128,14 +131,15 @@ export function EditTransactionDialog({ isOpen, onClose, transaction, products: 
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Produk</FormLabel>
-                    <Combobox
-                        options={productOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Pilih atau cari produk..."
-                        searchPlaceholder="Cari produk..."
-                        emptyPlaceholder="Produk tidak ditemukan."
-                    />
+                     <Button
+                        variant="outline"
+                        type="button"
+                        className="w-full justify-between font-normal"
+                        onClick={() => setIsProductDialogOpen(true)}
+                      >
+                        {selectedProduct?.name ?? "Pilih produk..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -231,5 +235,12 @@ export function EditTransactionDialog({ isOpen, onClose, transaction, products: 
         </Form>
       </DialogContent>
     </Dialog>
+     <ProductSelectionDialog
+        isOpen={isProductDialogOpen}
+        onClose={() => setIsProductDialogOpen(false)}
+        products={passedProducts}
+        onSelect={handleProductSelect}
+      />
+    </>
   );
 }
