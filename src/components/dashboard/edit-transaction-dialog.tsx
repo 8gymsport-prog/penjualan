@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
@@ -32,6 +32,7 @@ import {
 import type { Transaction, Product } from "@/lib/types";
 import { Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Combobox } from "@/components/ui/combobox";
 
 const paymentSchema = z.object({
   method: z.enum(["Tunai", "QR", "Transfer"]),
@@ -77,6 +78,10 @@ export function EditTransactionDialog({ isOpen, onClose, transaction, products: 
       payments: transaction.payments,
     },
   });
+  
+  const productOptions = useMemo(() => {
+    return passedProducts.map(p => ({ label: p.name, value: p.id }));
+  }, [passedProducts]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -121,20 +126,16 @@ export function EditTransactionDialog({ isOpen, onClose, transaction, products: 
                 control={form.control}
                 name="productId"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Produk</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih produk" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {passedProducts.map(product => (
-                          <SelectItem key={product.id} value={product.id}>{product.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                        options={productOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Pilih atau cari produk..."
+                        searchPlaceholder="Cari produk..."
+                        emptyPlaceholder="Produk tidak ditemukan."
+                    />
                     <FormMessage />
                   </FormItem>
                 )}

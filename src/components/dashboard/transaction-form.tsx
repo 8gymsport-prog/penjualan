@@ -23,8 +23,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Transaction, Product, Payment, PaymentMethod } from "@/lib/types";
 import { PlusCircle, Trash2, Plus, Minus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { Combobox } from "@/components/ui/combobox";
 
 const paymentSchema = z.object({
   method: z.enum(["Tunai", "QR", "Transfer"]),
@@ -71,6 +72,10 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
     name: "payments",
   });
 
+  const productOptions = useMemo(() => {
+    return products.map(p => ({ label: p.name, value: p.id }));
+  }, [products]);
+
   const selectedProductId = form.watch("productId");
   const quantity = form.watch("quantity");
   const payments = form.watch("payments");
@@ -87,6 +92,8 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
       if (form.getValues("payments").length === 1) {
         form.setValue("payments.0.amount", newTotal);
       }
+    } else {
+        form.setValue("price", 0);
     }
   }, [selectedProductId, quantity, products, form]);
 
@@ -111,24 +118,17 @@ export function TransactionForm({ addTransaction, isProcessing, products }: Tran
                 control={form.control}
                 name="productId"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Nama Produk</FormLabel>
-                     <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
+                    <Combobox
+                        options={productOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder={products.length === 0 ? "Belum ada produk" : "Pilih atau cari produk..."}
+                        searchPlaceholder="Cari produk..."
+                        emptyPlaceholder="Produk tidak ditemukan."
                         disabled={products.length === 0}
-                      >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={products.length === 0 ? "Belum ada produk" : "Pilih produk"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {products.map(product => (
-                            <SelectItem key={product.id} value={product.id}>{product.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
