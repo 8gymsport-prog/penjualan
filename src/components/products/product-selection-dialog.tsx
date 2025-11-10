@@ -33,7 +33,13 @@ export function ProductSelectionDialog({
 }: ProductSelectionDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="p-0">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Pilih Produk</DialogTitle>
+          <DialogDescription>
+            Cari dan pilih produk yang akan ditambahkan ke transaksi.
+          </DialogDescription>
+        </DialogHeader>
         <Command>
           <CommandInput placeholder="Cari produk..." />
           <CommandList>
